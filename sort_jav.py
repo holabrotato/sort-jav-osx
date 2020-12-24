@@ -203,7 +203,6 @@ def get_actress_string(html, s):
     a_list = get_actress_from_html(html, s)
     global actress_list
     actress_list = a_list
-    
 
     actress_string = ''
     # if javlibrary returns no actresses then we'll just say whatever we specified
@@ -527,6 +526,7 @@ def sort_jav(s):
         studio_list = get_studio_from_html(html,s)
         
         if s['osx-add-tags']:
+            print("Adding OSX Tags...")
             for actress in actress_list:
                 add_tag(actress, new_fname)
 
