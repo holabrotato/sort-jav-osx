@@ -11,6 +11,9 @@
 * Disclaimer
 
 ## Introduction
+This repository is a fork of https://github.com/mrunkel/sort_jav and is purpose built for OSX.
+It ignores .DS_Store files, and has a feature for adding tags.
+
 The sort_jav Python script sorts a folder of unsorted jav videos. The script was written by
 [/u/Ohura](https://reddit.com/user/Ohura). The goal is help users sort all their jav content nice and easily.
 
