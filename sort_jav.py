@@ -1,8 +1,11 @@
 import os
 import urllib.request
 import re
+from datetime import datetime
 import sys  # just so we can test exiting
 import cfscrape
+from osxmetadata import OSXMetaData, Tag, FINDER_COLOR_GREEN
+from bs4 import BeautifulSoup
 
 # if we make this global or at least pass it in to the function
 # it will yield significantly faster results because it can cache the cookie
@@ -11,6 +14,24 @@ scraper = cfscrape.create_scraper()
 
 # global actress array
 actress_list = []
+
+# path array
+path_list = [
+    # '/Volumes/WD/JAV/CAWD',
+    '/Volumes/WD/JAV/CJOD',
+    # '/Volumes/WD/JAV/DASD',
+    # '/Volumes/WD/JAV/EBVR',
+    # '/Volumes/WD/JAV/FSDSS',
+    # '/Volumes/WD/JAV/HJMO',
+    # '/Volumes/WD/JAV/HND',
+    # '/Volumes/WD/JAV/IPX',
+    # '/Volumes/WD/JAV/MIDE',
+    # '/Volumes/WD/JAV/SNIS',
+    # '/Volumes/WD/JAV/SSNI',
+    # '/Volumes/WD/JAV/TEK',
+    # '/Volumes/WD/JAV/WANZ',
+    # '/Volumes/WD/JAV/SIVR',
+]
 
 class AppUrlopener(urllib.request.FancyURLopener):
     version = "Mozilla/5.0"
@@ -242,6 +263,25 @@ def get_studio_from_html(raw_html, s):
         a_list.append(fname)
     return a_list
 
+def get_date_from_html(raw_html, s):
+    match = re.search(r'\d{4}-\d{2}-\d{2}', raw_html)
+    # date = datetime.strptime(match.group(), '%Y-%m-%d').date()
+    return match.group()
+    
+def get_title_from_html(html, s):
+    """Return a English Title from the html
+    """
+    soup = BeautifulSoup(html, 'html.parser')
+    print(html)
+    return "just a little beautifulsoup"
+    # a_list = []
+    # split_str = '<span  class="label">'
+    # # 1 to end because first will have nothing
+    # for section in html.split(split_str)[1:]:
+    #     # fname is the full name
+    #     fname = section.split('rel="tag">')[1].split('<')[0]
+    #     a_list.append(fname)
+    # return a_list
 
 def get_label_from_html(raw_html, s):
     """Return a list of labels from the html
@@ -478,19 +518,39 @@ def strip_bad_data(path):
 def add_tag(tag, file):
     tag_results = os.system("tag --add \"" + tag + "\" " + file)
 
-def sort_jav(s):
+def sort_jav(a_path, s):
     """Sort all our unsorted jav as per the specified settings"""
 
     # store all the files to rename in a list so we don't mess with looping over the files
     temp = []
+    print(" ")
+    print("  Processing: " + a_path)
+    for f in os.listdir(a_path):
+        fullpath = os.path.join(a_path, f)
+        file_name, file_extension = os.path.splitext(fullpath)
 
-    for f in os.listdir(s['path']):
-        fullpath = os.path.join(s['path'], f)
-
+  
         # only consider video files
-        if not os.path.isdir(fullpath) and f != '.DS_Store':
-            temp.append(fullpath)
+        if not os.path.isdir(fullpath): # ignore DS Store and folders
 
+            if f == '.DS_Store':
+                continue
+
+            if file_extension == ".jpg": # only consider video files
+                continue
+
+            else:
+                meta = OSXMetaData(fullpath)
+                already_processed = False
+
+                if meta.findercomment:
+                    already_processed = "Sort_jav.py" in meta.findercomment
+                
+                    if already_processed and s['skip-processed']:
+                        # print("    ...Skipping already processed:  " + fullpath)
+                        continue
+
+                temp.append(fullpath)
     count = 0
     for path in temp:
         count += 1
@@ -499,21 +559,21 @@ def sort_jav(s):
         except:
             # to prevent crashing on r18/t28 files
             vid_id = strip_file_name(path)
-        print("Sorting {0}: {1} of {2}".format(vid_id, count, len(temp)))
+        print("    Sorting {0}: {1} of {2}".format(vid_id, count, len(temp)))
         try:
             s['video-number'] = strip_video_number_from_video(path, vid_id, s)
             if s['make-video-id-all-uppercase']:
                 vid_id = vid_id.upper()
         except Exception as e:
-            print("Not sorting {} as it is does not look like a JAV ID".format(vid_id))
+            print("    ...Skipping {} , could not find JAV ID ".format(vid_id))
             continue
         html = get_javlibrary_url(vid_id)
         
         if not html:
             try:
-                print("Could not find video on javlibrary so skipping " + vid_id)
+                print("    ...Skipping: Could not find video on javlibrary " + vid_id)
             except:
-                print("Skipping one file with unknown characters in the file name")
+                print("    ...Skipping one file with unknown characters in the file name")
             continue
 
         # rename the file according to our convention
@@ -524,9 +584,13 @@ def sort_jav(s):
         genre_list = get_genre_from_html(html,s)
         label_list = get_label_from_html(html,s)
         studio_list = get_studio_from_html(html,s)
+        publish_date = get_date_from_html(html,s)
         
+        meta = OSXMetaData(new_fname)
+        
+                
         if s['osx-add-tags']:
-            print("Adding OSX Tags...")
+            print("    Adding OSX Metadata... " + path)
             for actress in actress_list:
                 add_tag(actress, new_fname)
 
@@ -538,6 +602,15 @@ def sort_jav(s):
 
             for studio in studio_list:
                 add_tag(studio, new_fname)
+
+            print(get_title_from_html(html,s))
+
+            # set description
+            meta.description = ""
+            current_date = datetime.now()
+            meta.description = "Released  " + publish_date
+            meta.findercomment = "Released: " + publish_date + " | Sort_jav.py: " + current_date.strftime("%m/%d/%Y %H:%M:%S")
+
 
 
         # move the file into a folder (if we say to)
@@ -551,10 +624,14 @@ def sort_jav(s):
 if __name__ == '__main__':
 
     try:
-        print("Sorting your JAV, please wait...")
+        print("  Starting: Sorting your collections, please wait.")
+
         settings = read_file('settings_sort_jav.ini')
-        sort_jav(settings)
-        input("Press Enter to finish.")
+        for a_path in path_list:
+            sort_jav(a_path, settings)
+        print("   ")
+        input("Sorting complete! Press Enter to quit...")
+        print("   ")
     except Exception as e:
         print(e)
         print("Panic! Go find help.")

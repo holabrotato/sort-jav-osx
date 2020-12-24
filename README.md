@@ -115,3 +115,7 @@ This script is provided “as is” and the creator is not liable for anything t
 of the use of it.
 
 This being said, if you experience any issues with it, feel free to ask for help.
+
+## Future Enhancements
+1.  In comment, add publish date of movie.
+2.      If a file has tags, don't re-process to speed up. (Flag)
