@@ -18,19 +18,37 @@ actress_list = []
 # path array
 path_list = [
     # '/Volumes/WD/JAV/CAWD',
-    '/Volumes/WD/JAV/CJOD',
+    # '/Volumes/WD/JAV/CJOD',
     # '/Volumes/WD/JAV/DASD',
+    # '/Volumes/WD/JAV/DOKI',
+    # '/Volumes/WD/JAV/EBOD',
     # '/Volumes/WD/JAV/EBVR',
+    # '/Volumes/WD/JAV/EYAN',
     # '/Volumes/WD/JAV/FSDSS',
+    # '/Volumes/WD/JAV/HJBB',
     # '/Volumes/WD/JAV/HJMO',
-    # '/Volumes/WD/JAV/HND',
+    '/Volumes/WD/JAV/HND',
+    # '/Volumes/WD/JAV/HNVR',
+    # '/Volumes/WD/JAV/Heyzo',
+    # '/Volumes/WD/JAV/IPVR',
     # '/Volumes/WD/JAV/IPX',
+    # '/Volumes/WD/JAV/JUL',
+    # '/Volumes/WD/JAV/JapanHDV',
+    # '/Volumes/WD/JAV/MIAD',
     # '/Volumes/WD/JAV/MIDE',
+    # '/Volumes/WD/JAV/MIGD',
+    # '/Volumes/WD/JAV/MXGS',
+    # '/Volumes/WD/JAV/NSPS',
+    # '/Volumes/WD/JAV/SDJS',
+    # '/Volumes/WD/JAV/SIVR',
     # '/Volumes/WD/JAV/SNIS',
     # '/Volumes/WD/JAV/SSNI',
+    # '/Volumes/WD/JAV/STARS',
     # '/Volumes/WD/JAV/TEK',
-    # '/Volumes/WD/JAV/WANZ',
-    # '/Volumes/WD/JAV/SIVR',
+    # '/Volumes/WD/JAV/UMD',
+    # '/Volumes/WD/JAV/VRTM',
+    # '/Volumes/WD/JAV/WAAA',
+    # '/Volumes/WD/JAV/WANZ'
 ]
 
 class AppUrlopener(urllib.request.FancyURLopener):
@@ -126,7 +144,17 @@ def get_javlibrary_url(vid_id):
     vid_id = check_vid_id_has_dash(vid_id.upper())
     try:
         search_url = "http://www.javlibrary.com/en/vl_searchbyid.php?keyword=" + vid_id
-        html = get_url_response(search_url, vid_id)
+
+        # super ghetto-tastic cloudflare fix... manual entry of html
+
+        if s['ghetto-fix']:
+            input("Please paste HTML into javlibrary.html for ( "+vid_id+" ) and push enter to continue.")
+            html = None
+            javfile = open('javlibrary.html', "r");
+            html = javfile.read()
+            javfile.close()
+        else:
+            html = get_url_response(search_url, vid_id)
 
         # we didn't get a valid response
         if html == None:
@@ -272,16 +300,7 @@ def get_title_from_html(html, s):
     """Return a English Title from the html
     """
     soup = BeautifulSoup(html, 'html.parser')
-    print(html)
-    return "just a little beautifulsoup"
-    # a_list = []
-    # split_str = '<span  class="label">'
-    # # 1 to end because first will have nothing
-    # for section in html.split(split_str)[1:]:
-    #     # fname is the full name
-    #     fname = section.split('rel="tag">')[1].split('<')[0]
-    #     a_list.append(fname)
-    # return a_list
+    return soup.h3.a.text
 
 def get_label_from_html(raw_html, s):
     """Return a list of labels from the html
@@ -603,13 +622,13 @@ def sort_jav(a_path, s):
             for studio in studio_list:
                 add_tag(studio, new_fname)
 
-            print(get_title_from_html(html,s))
+            jav_title = get_title_from_html(html,s)
 
             # set description
             meta.description = ""
             current_date = datetime.now()
             meta.description = "Released  " + publish_date
-            meta.findercomment = "Released: " + publish_date + " | Sort_jav.py: " + current_date.strftime("%m/%d/%Y %H:%M:%S")
+            meta.findercomment =  publish_date + " " + jav_title + " | Sort_jav.py: " + current_date.strftime("%m/%d/%Y %H:%M")
 
 
 
