@@ -7,6 +7,17 @@ import sys  # just so we can test exiting
 import cfscrape
 from osxmetadata import OSXMetaData, Tag, FINDER_COLOR_GREEN
 from bs4 import BeautifulSoup
+import requests
+
+class JAVMovie:
+    actresses = []
+    genres = []
+    studio = ""
+    label = ""
+    release_date = ""
+    cover_url = ""
+    def __init__(self, code):
+        self.code = code
 
 # if we make this global or at least pass it in to the function
 # it will yield significantly faster results because it can cache the cookie
@@ -15,32 +26,39 @@ scraper = cfscrape.create_scraper()
 
 # global actress array
 actress_list = []
+_movie = JAVMovie(code="")
 
 # path array
 path_list = [
-    '/Volumes/WD/JAV/CAWD',
-    '/Volumes/WD/JAV/CJOD',
-    '/Volumes/WD/JAV/DASD',
-    '/Volumes/WD/JAV/DOKI',
-    '/Volumes/WD/JAV/EBOD',
+    '/Volumes/WD/JAV/AJVR',
+    '/Volumes/WD/JAV/CBIKMV',
+    # '/Volumes/WD/JAV/CJOD',
+    # '/Volumes/WD/JAV/DASD',
+    # '/Volumes/WD/JAV/DOKI',
+    # '/Volumes/WD/JAV/EBOD',
     '/Volumes/WD/JAV/EBVR',
-    '/Volumes/WD/JAV/EYAN',
-    '/Volumes/WD/JAV/FSDSS',
-    '/Volumes/WD/JAV/HJBB',
+    # '/Volumes/WD/JAV/EYAN',
+    # '/Volumes/WD/JAV/FSDSS',
+    # '/Volumes/WD/JAV/HJBB',
     '/Volumes/WD/JAV/HJMO',
-    '/Volumes/WD/JAV/HND',
+    # '/Volumes/WD/JAV/HND',
     '/Volumes/WD/JAV/HNVR',
     '/Volumes/WD/JAV/IPVR',
     '/Volumes/WD/JAV/IPX',
+    '/Volumes/WD/JAV/IPZ',
     '/Volumes/WD/JAV/JUL',
     '/Volumes/WD/JAV/KATU',
+    '/Volumes/WD/JAV/KBVR',
+    '/Volumes/WD/JAV/KIWVR',
     '/Volumes/WD/JAV/MEYD',
-    '/Volumes/WD/JAV/MIAD',
+    '/Volumes/WD/JAV/MDVR',
     '/Volumes/WD/JAV/MIDE',
     '/Volumes/WD/JAV/MIGD',
     '/Volumes/WD/JAV/MIZD',
     '/Volumes/WD/JAV/MXGS',
     '/Volumes/WD/JAV/NSPS',
+    '/Volumes/WD/JAV/PPPD',
+    '/Volumes/WD/JAV/PRVR',
     '/Volumes/WD/JAV/RCTD',
     '/Volumes/WD/JAV/SDJS',
     '/Volumes/WD/JAV/SIVR',
@@ -49,8 +67,12 @@ path_list = [
     '/Volumes/WD/JAV/STARS',
     '/Volumes/WD/JAV/TEK',
     '/Volumes/WD/JAV/UMD',
+    '/Volumes/WD/JAV/VRKM',
     '/Volumes/WD/JAV/VRTM',
     '/Volumes/WD/JAV/WAAA',
+    '/Volumes/WD/JAV/WANZ',
+    '/Volumes/WD/JAV/WAVR',
+    '/Volumes/WD/JAV/YMDD',
     '/Volumes/WD/JAV/WANZ'
 ]
 
@@ -139,6 +161,61 @@ def strip_video_number_from_video(path, vid_id, s):
         else:
             return ret
 
+def get_page(url):
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    response = requests.get(url, headers=headers)
+    return response.content
+
+
+
+def get_r18_url(vid_id):
+    vid_id = check_vid_id_has_dash(vid_id.upper())
+    search_url = "https://www.r18.com/common/search/searchword=" + vid_id + "/"
+    search_html = get_page(search_url)
+
+    # now we have the search_url, let's grab the actual video html for meta-data
+    soup_search = BeautifulSoup(search_html, 'html.parser')
+    
+    try:
+        search_url = soup_search.find(class_="cmn-list-product01").find("li").find("a")["href"]
+    except:
+        return None
+
+    product_html = get_page(search_url)
+
+    return product_html
+
+def parse_r18_page(html, vid_id):
+    jav_video = JAVMovie(code=vid_id)
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # get release date
+    jav_video.release_date = soup.find(itemprop='dateCreated').get_text().strip()
+    jav_video.studio = soup.find(itemprop='productionCompany').get_text().strip()
+    
+    genres_list = []
+    genres_tags = soup.find_all(itemprop='genre')
+    for tag in genres_tags:
+        genre = tag.text.strip()
+        genres_list.append(genre)
+    jav_video.genres = genres_list
+
+    actress_list = []
+    actress_tags = soup.find(itemprop='actors').find_all(itemprop='name')
+
+    jav_video.title = soup.find('cite',itemprop='name').get_text().strip()
+
+    for actress_tag in actress_tags:
+        actress_list.append(actress_tag.text.strip())
+    jav_video.actresses = actress_list
+
+    # get cover image url
+    jav_video.cover_url = soup.find(class_='detail-single-picture').find("img")["src"]
+
+    return jav_video
+
+
 
 def get_javlibrary_url(vid_id):
     """get the URL of the video on javlibrary
@@ -203,7 +280,7 @@ def rename_file(path, html, s, vid_id):
     """Rename the file per our settings
     Returns the name of the file regardless of whether it has been renamed"""
     actress_string = get_actress_string(html, s)
-    
+
     if s['include-actress-in-video-name']:
         base = strip_partial_path_from_file(path)
         if s['video-number']:
@@ -332,17 +409,22 @@ def get_genre_from_html(raw_html, s):
     return a_list
 
 def get_actress_from_html(html, s):
+    global _movie
     """Return a list of actresses from the html
     actresses are strings that are formatted the way we can put them straight in the name"""
 
     a_list = []
-    split_str = '<span class="star">'
-    # 1 to end because first will have nothing
-    for section in html.split(split_str)[1:]:
-        # fname is the full name
-        fname = section.split('rel="tag">')[1].split('<')[0]
-        fname = fix_actress_name(fname)
-        a_list.append(fname)
+
+    if s['use-r18']:
+        a_list = _movie.actresses
+    else:
+        split_str = '<span class="star">'
+        # 1 to end because first will have nothing
+        for section in html.split(split_str)[1:]:
+            # fname is the full name
+            fname = section.split('rel="tag">')[1].split('<')[0]
+            fname = fix_actress_name(fname)
+            a_list.append(fname)
 
     fixed_names = []
     for fname in a_list:
@@ -435,7 +517,7 @@ def get_cover_for_video(path, vid_id, s, html):
     """Get the cover for the video denoted by path from the specified html"""
     # path needs to be stripped but otherwise we can use it to store the video
     # html should have the cover there we can take
-    img_link = get_image_url_from_html(html)
+    img_link = get_image_url_from_html(html, s)
     # TODO:
     # create the path name based on the settings file
     base = strip_partial_path_from_file(path)
@@ -453,7 +535,11 @@ def save_image_from_url_to_path(path, url):
     """save an image denoted by the url to the path denoted by path
     with the given name"""
 
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')]
+    urllib.request.install_opener(opener)
     urllib.request.urlretrieve(url, path + ".jpg")
+
     # if we move the file it should fix itself
     try:
         drive = path.split(os.sep)[0]
@@ -464,9 +550,13 @@ def save_image_from_url_to_path(path, url):
         pass
 
 
-def get_image_url_from_html(html):
+def get_image_url_from_html(html,s):
+    global _movie
     """get the url of the image from the supplied html for the page"""
-    return "http:" + html.split('<img id="video_jacket_img" src="')[1].split('" width')[0]
+    if s['use-r18']:
+        return _movie.cover_url
+    else:
+        return "http:" + html.split('<img id="video_jacket_img" src="')[1].split('" width')[0]
 
 
 def rename_start_quotation(path):
@@ -541,6 +631,7 @@ def add_tag(tag, file):
     tag_results = os.system("tag --add \"" + tag + "\" " + file)
 
 def sort_jav(a_path, s):
+    global _movie
     """Sort all our unsorted jav as per the specified settings"""
 
     # store all the files to rename in a list so we don't mess with looping over the files
@@ -582,7 +673,7 @@ def sort_jav(a_path, s):
             except:
                 # to prevent crashing on r18/t28 files
                 vid_id = strip_file_name(path)
-                print("    Sorting {0}: {1} of {2}".format(vid_id, count, len(temp)))
+                print("    Processing {0}: {1} of {2}".format(vid_id, count, len(temp)))
 
             try:
                 vid_id = correct_vid_id(find_id(strip_bad_data(strip_file_name(path))))
@@ -621,8 +712,23 @@ def sort_jav(a_path, s):
         except Exception as e:
             print("    ...Skipping {} , could not find JAV ID ".format(vid_id))
             continue
-        html = get_javlibrary_url(vid_id)
         
+        
+        if s['use-r18']:
+            html = get_r18_url(vid_id)
+            if(html == None):
+                 print("    ...Skipping: Could not find video on R18 " + vid_id)
+                 continue
+            
+            # now let's parse the website and fetch all the meta-data
+            _movie = parse_r18_page(html,vid_id)
+
+        else:
+            html = get_javlibrary_url(vid_id)
+            continue
+
+####
+
         if not html:
             try:
                 print("    ...Skipping: Could not find video on javlibrary " + vid_id)
@@ -630,42 +736,62 @@ def sort_jav(a_path, s):
                 print("    ...Skipping one file with unknown characters in the file name")
             continue
 
+
         # rename the file according to our convention
         new_fname = rename_file(path, html, s, vid_id)
-
-        # add tags if necessary 
-        global actress_list
-        genre_list = get_genre_from_html(html,s)
-        label_list = get_label_from_html(html,s)
-        studio_list = get_studio_from_html(html,s)
-        publish_date = get_date_from_html(html,s)
-        
-        meta = OSXMetaData(new_fname)
-        
                 
         if s['osx-add-tags']:
-            print("    Adding OSX Metadata... " + path)
-            for actress in actress_list:
-                add_tag(actress, new_fname)
+            meta = OSXMetaData(new_fname)
+            print("    ...Adding OSX Metadata (" + path +")")
 
-            for genre in genre_list:
-                add_tag(genre,new_fname)
+            if s['use-r18']:
+                for actress in _movie.actresses:
+                    add_tag(actress, new_fname)
+                
+                for genre in _movie.genres:
+                    add_tag(genre,new_fname)
 
-            for label in label_list:
-                add_tag(label, new_fname)
+                add_tag(_movie.label, new_fname)
+                add_tag(_movie.studio, new_fname)
 
-            for studio in studio_list:
-                add_tag(studio, new_fname)
+                jav_title = _movie.title
 
-            jav_title = get_title_from_html(html,s)
+                # set description
+                meta.description = ""
+                current_date = datetime.now()
+                meta.description = "Released  " + _movie.release_date
+                meta.findercomment =  _movie.release_date + " " + _movie.title + " Sort_jav.py"
 
-            # set description
-            meta.description = ""
-            current_date = datetime.now()
-            meta.description = "Released  " + publish_date
-            meta.findercomment =  publish_date + " " + jav_title + " | Sort_jav.py: " + current_date.strftime("%m/%d/%Y %H:%M")
+                
 
+            else:
+                # add tags if necessary 
+                global actress_list
+                genre_list = get_genre_from_html(html,s)
+                label_list = get_label_from_html(html,s)
+                studio_list = get_studio_from_html(html,s)
+                publish_date = get_date_from_html(html,s)
+                
 
+                for actress in actress_list:
+                    add_tag(actress, new_fname)
+
+                for genre in genre_list:
+                    add_tag(genre,new_fname)
+
+                for label in label_list:
+                    add_tag(label, new_fname)
+
+                for studio in studio_list:
+                    add_tag(studio, new_fname)
+
+                jav_title = get_title_from_html(html,s)
+
+                # set description
+                meta.description = ""
+                current_date = datetime.now()
+                meta.description = "Released  " + publish_date
+                meta.findercomment =  publish_date + " " + jav_title + " | Sort_jav.py"
 
         # move the file into a folder (if we say to)
         if s['move-video-to-new-folder']:
@@ -684,8 +810,11 @@ if __name__ == '__main__':
         for a_path in path_list:
             sort_jav(a_path, settings)
         print("   ")
-        input("Sorting complete! Press Enter to quit...")
+        print("Sorting complete! ")
         print("   ")
     except Exception as e:
         print(e)
         print("Panic! Go find help.")
+
+
+
