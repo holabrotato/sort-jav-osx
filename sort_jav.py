@@ -1,6 +1,7 @@
 import os
 import urllib.request
 import re
+import touch
 from datetime import datetime
 import sys  # just so we can test exiting
 import cfscrape
@@ -17,38 +18,40 @@ actress_list = []
 
 # path array
 path_list = [
-    # '/Volumes/WD/JAV/CAWD',
-    # '/Volumes/WD/JAV/CJOD',
-    # '/Volumes/WD/JAV/DASD',
-    # '/Volumes/WD/JAV/DOKI',
-    # '/Volumes/WD/JAV/EBOD',
-    # '/Volumes/WD/JAV/EBVR',
-    # '/Volumes/WD/JAV/EYAN',
-    # '/Volumes/WD/JAV/FSDSS',
-    # '/Volumes/WD/JAV/HJBB',
-    # '/Volumes/WD/JAV/HJMO',
+    '/Volumes/WD/JAV/CAWD',
+    '/Volumes/WD/JAV/CJOD',
+    '/Volumes/WD/JAV/DASD',
+    '/Volumes/WD/JAV/DOKI',
+    '/Volumes/WD/JAV/EBOD',
+    '/Volumes/WD/JAV/EBVR',
+    '/Volumes/WD/JAV/EYAN',
+    '/Volumes/WD/JAV/FSDSS',
+    '/Volumes/WD/JAV/HJBB',
+    '/Volumes/WD/JAV/HJMO',
     '/Volumes/WD/JAV/HND',
-    # '/Volumes/WD/JAV/HNVR',
-    # '/Volumes/WD/JAV/Heyzo',
-    # '/Volumes/WD/JAV/IPVR',
-    # '/Volumes/WD/JAV/IPX',
-    # '/Volumes/WD/JAV/JUL',
-    # '/Volumes/WD/JAV/JapanHDV',
-    # '/Volumes/WD/JAV/MIAD',
-    # '/Volumes/WD/JAV/MIDE',
-    # '/Volumes/WD/JAV/MIGD',
-    # '/Volumes/WD/JAV/MXGS',
-    # '/Volumes/WD/JAV/NSPS',
-    # '/Volumes/WD/JAV/SDJS',
-    # '/Volumes/WD/JAV/SIVR',
-    # '/Volumes/WD/JAV/SNIS',
-    # '/Volumes/WD/JAV/SSNI',
-    # '/Volumes/WD/JAV/STARS',
-    # '/Volumes/WD/JAV/TEK',
-    # '/Volumes/WD/JAV/UMD',
-    # '/Volumes/WD/JAV/VRTM',
-    # '/Volumes/WD/JAV/WAAA',
-    # '/Volumes/WD/JAV/WANZ'
+    '/Volumes/WD/JAV/HNVR',
+    '/Volumes/WD/JAV/IPVR',
+    '/Volumes/WD/JAV/IPX',
+    '/Volumes/WD/JAV/JUL',
+    '/Volumes/WD/JAV/KATU',
+    '/Volumes/WD/JAV/MEYD',
+    '/Volumes/WD/JAV/MIAD',
+    '/Volumes/WD/JAV/MIDE',
+    '/Volumes/WD/JAV/MIGD',
+    '/Volumes/WD/JAV/MIZD',
+    '/Volumes/WD/JAV/MXGS',
+    '/Volumes/WD/JAV/NSPS',
+    '/Volumes/WD/JAV/RCTD',
+    '/Volumes/WD/JAV/SDJS',
+    '/Volumes/WD/JAV/SIVR',
+    '/Volumes/WD/JAV/SNIS',
+    '/Volumes/WD/JAV/SSNI',
+    '/Volumes/WD/JAV/STARS',
+    '/Volumes/WD/JAV/TEK',
+    '/Volumes/WD/JAV/UMD',
+    '/Volumes/WD/JAV/VRTM',
+    '/Volumes/WD/JAV/WAAA',
+    '/Volumes/WD/JAV/WANZ'
 ]
 
 class AppUrlopener(urllib.request.FancyURLopener):
@@ -148,9 +151,8 @@ def get_javlibrary_url(vid_id):
         # super ghetto-tastic cloudflare fix... manual entry of html
 
         if s['ghetto-fix']:
-            input("Please paste HTML into javlibrary.html for ( "+vid_id+" ) and push enter to continue.")
             html = None
-            javfile = open('javlibrary.html', "r");
+            javfile = open('html/lib/' + vid_id + ".html", "r");
             html = javfile.read()
             javfile.close()
         else:
@@ -160,7 +162,8 @@ def get_javlibrary_url(vid_id):
         if html == None:
             return None
         return html
-    except:
+    except Exception as e:
+        print(str(e))
         return None
 
 
@@ -542,8 +545,10 @@ def sort_jav(a_path, s):
 
     # store all the files to rename in a list so we don't mess with looping over the files
     temp = []
+    count = 0
+
     print(" ")
-    print("  Processing: " + a_path)
+    print("  Analyzing Directory : " + a_path)
     for f in os.listdir(a_path):
         fullpath = os.path.join(a_path, f)
         file_name, file_extension = os.path.splitext(fullpath)
@@ -564,13 +569,43 @@ def sort_jav(a_path, s):
 
                 if meta.findercomment:
                     already_processed = "Sort_jav.py" in meta.findercomment
-                
                     if already_processed and s['skip-processed']:
-                        # print("    ...Skipping already processed:  " + fullpath)
                         continue
 
                 temp.append(fullpath)
-    count = 0
+
+    if s['collect-phase']:
+        count += 1
+        for path in temp:
+            try:
+                vid_id = correct_vid_id(find_id(strip_bad_data(strip_file_name(path))))
+            except:
+                # to prevent crashing on r18/t28 files
+                vid_id = strip_file_name(path)
+                print("    Sorting {0}: {1} of {2}".format(vid_id, count, len(temp)))
+
+            try:
+                vid_id = correct_vid_id(find_id(strip_bad_data(strip_file_name(path))))
+            except:
+                # to prevent crashing on r18/t28 files
+                vid_id = strip_file_name(path)
+            print("    Sorting {0}: {1} of {2}".format(vid_id, count, len(temp)))
+            try:
+                s['video-number'] = strip_video_number_from_video(path, vid_id, s)
+                if s['make-video-id-all-uppercase']:
+                    vid_id = vid_id.upper()
+            except:
+                print("uh oh")
+            html_path = "html/" + vid_id +".html"
+            if not os.path.exists(html_path):
+                print("       (Collection) Creating new file - " + vid_id + ".html")
+                touch.touch(html_path)
+            else:
+                print("       (Collection) Found existing file - " + vid_id +".html")
+        return None
+
+
+
     for path in temp:
         count += 1
         try:
