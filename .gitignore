@@ -17,7 +17,6 @@ downloads/
 eggs/
 .eggs/
 lib/
-cache/
 lib64/
 parts/
 sdist/
@@ -188,3 +187,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+
+cache/
