@@ -6,10 +6,12 @@ import html
 import string
 from datetime import datetime
 import sys  # just so we can test exiting
-import cfscrape
 from osxmetadata import OSXMetaData, Tag, FINDER_COLOR_GREEN
 from bs4 import BeautifulSoup
 import requests
+import time
+
+startTime = time.time()
 
 class JAVMovie:
     actresses = []
@@ -27,56 +29,63 @@ _movie = JAVMovie(code="")
 
 # path array
 path_list = [
-    # '/Volumes/WD/JAV/3DSVR',
-    # '/Volumes/WD/JAV/AJVR',
-    # '/Volumes/WD/JAV/CBIKMV',
-    # '/Volumes/WD/JAV/CJOD',
-    # '/Volumes/WD/JAV/DASD',
-    # '/Volumes/WD/JAV/DOKI',
-    # '/Volumes/WD/JAV/EBOD',
-    # '/Volumes/WD/JAV/EBVR',
-    # '/Volumes/WD/JAV/EYAN',
-    # '/Volumes/WD/JAV/FSDSS',
-    # '/Volumes/WD/JAV/HJMO',
-    # '/Volumes/WD/JAV/HND',
-    # '/Volumes/WD/JAV/HNVR',
-    # '/Volumes/WD/JAV/IPVR',
-    # '/Volumes/WD/JAV/IPX',
-    # '/Volumes/WD/JAV/IPZ',
-    # '/Volumes/WD/JAV/JUL',
-    # '/Volumes/WD/JAV/JUFD',
-    # '/Volumes/WD/JAV/KATU',
-    # '/Volumes/WD/JAV/KBVR',
-    # '/Volumes/WD/JAV/KIWVR',
-    # '/Volumes/WD/JAV/MEYD',
-    # '/Volumes/WD/JAV/MDVR',
-    # '/Volumes/WD/JAV/MIDE',
-    # '/Volumes/WD/JAV/MIGD',
-    # '/Volumes/WD/JAV/MIZD',
-    # '/Volumes/WD/JAV/MXGS',
-    # '/Volumes/WD/JAV/NSPS',
-    # '/Volumes/WD/JAV/PPPD',
-    # '/Volumes/WD/JAV/PRVR',
-    # '/Volumes/WD/JAV/RCTD',
-    # '/Volumes/WD/JAV/SDJS',
-    '/Volumes/WD/JAV/SIVR',
-    # '/Volumes/WD/JAV/SNIS',
-    # '/Volumes/WD/JAV/SSNI',
-    # '/Volumes/WD/JAV/STARS',
-    # '/Volumes/WD/JAV/TEK',
-    # '/Volumes/WD/JAV/UMD',
-    # '/Volumes/WD/JAV/VRKM',
-    # '/Volumes/WD/JAV/VRTM',
-    # '/Volumes/WD/JAV/WAAA',
-    # '/Volumes/WD/JAV/WANZ',
-    # '/Volumes/WD/JAV/WAVR',
-    # '/Volumes/WD/JAV/YMDD',
-    # '/Volumes/WD/JAV/WANZ'
+    '/Volumes/WD/JAV/',
+
+    # JAV SUB FOLDER
+    '/Volumes/WD/JAV/CAWD',
+    '/Volumes/WD/JAV/CBIKMV',
+    '/Volumes/WD/JAV/CJOD',
+    '/Volumes/WD/JAV/DASD',
+    '/Volumes/WD/JAV/DOKI',
+    '/Volumes/WD/JAV/EBOD',
+    '/Volumes/WD/JAV/EBVR',
+    '/Volumes/WD/JAV/EYAN',
+    '/Volumes/WD/JAV/FSDSS',
+    '/Volumes/WD/JAV/HJBB',
+    '/Volumes/WD/JAV/HJMO',
+    '/Volumes/WD/JAV/HND',
+    '/Volumes/WD/JAV/HNVR',
+    '/Volumes/WD/JAV/IPVR',
+    '/Volumes/WD/JAV/IPX',
+    '/Volumes/WD/JAV/IPZ',
+    '/Volumes/WD/JAV/JUFD',
+    '/Volumes/WD/JAV/JUL',
+    '/Volumes/WD/JAV/KATU',
+    '/Volumes/WD/JAV/KIWVR',
+    '/Volumes/WD/JAV/MDVR',
+    '/Volumes/WD/JAV/MEYD',
+    '/Volumes/WD/JAV/MIAD',
+    '/Volumes/WD/JAV/MIDE',
+    '/Volumes/WD/JAV/MIGD',
+    '/Volumes/WD/JAV/MIZD',
+    '/Volumes/WD/JAV/MVSD',
+    '/Volumes/WD/JAV/MXGS',
+    '/Volumes/WD/JAV/NSPS',
+    '/Volumes/WD/JAV/PPPD',
+    '/Volumes/WD/JAV/RCTD',
+    '/Volumes/WD/JAV/SDJS',
+    '/Volumes/WD/JAV/SNIS',
+    '/Volumes/WD/JAV/SSNI',
+    '/Volumes/WD/JAV/STARS',
+    '/Volumes/WD/JAV/TEK',
+    '/Volumes/WD/JAV/UMD',
+    '/Volumes/WD/JAV/VRTM',
+    '/Volumes/WD/JAV/WAAA',
+    '/Volumes/WD/JAV/WANZ',
+    '/Volumes/WD/JAV/YMDD',
+
+    # VR Folders
+    '/Volumes/WD/VR/3DSVR',
+    '/Volumes/WD/VR/AJVR',
+    # '/Volumes/WD/VR/DSVR',
+    '/Volumes/WD/VR/KAVR',
+    '/Volumes/WD/VR/KBVR',
+    '/Volumes/WD/VR/PRVR',
+    '/Volumes/WD/VR/SAVR',
+    '/Volumes/WD/VR/SIVR',
+    '/Volumes/WD/VR/VRKM',
+    '/Volumes/WD/VR/WAVR'
 ]
-
-class AppUrlopener(urllib.request.FancyURLopener):
-    version = "Mozilla/5.0"
-
 
 def read_file(path):
     """Return a dictionary containing a map of name of setting -> value"""
@@ -457,7 +466,6 @@ def find_id(s):
     else:
         return None
 
-
 def correct_vid_id(vid_id):
     """Check if the video id has a dash and return it with one if it doesn't have it
     also fixes anything that has a digit first"""
@@ -497,7 +505,7 @@ def strip_full_file_name(path):
 
 def strip_bad_data(path):
     """Remove any data from the path that might conflict"""
-    bad = ['hjd2048.com', 'h264', 'play999']
+    bad = ['hjd2048.com', 'h264', 'play999', 'h265', 'hhd800.com']
 
     for str_to_remove in bad:
         if path.find(str_to_remove) != -1:
@@ -526,15 +534,11 @@ def sort_jav(a_path, s):
     for f in os.listdir(a_path):
         fullpath = os.path.join(a_path, f)
         file_name, file_extension = os.path.splitext(fullpath)
-
   
         # only consider video files
         if not os.path.isdir(fullpath): # ignore DS Store and folders
 
-            if f == '.DS_Store':
-                continue
-
-            if file_extension == ".jpg": # only consider video files
+            if f == '.DS_Store' or file_extension == ".jpg":
                 continue
 
             else:
@@ -547,7 +551,6 @@ def sort_jav(a_path, s):
                         continue
 
                 temp.append(fullpath)
-
 
     for path in temp:
         count += 1
@@ -567,19 +570,26 @@ def sort_jav(a_path, s):
         
         # let's check our cache
         try:
-            javfile = open('./cache/' + vid_id + ".html", "r")
-            r18_html = javfile.read()
+            cache_path = './cache/' + vid_id + ".html"
+            javfile = open(cache_path, "r")
+            r18_html = javfile.read()  #  If the cache exists, let's just read the file 
+                                       #     to prevent unnecessary http calls
             r18_html = r18_html.replace("\n","")
+            if os.stat(cache_path).st_size == 0:
+                raise Exception("found empty html file")
             javfile.close()
-            print("      (Action) Loading ./cache/" + vid_id+".html")
+            print("      (Action) Loading " + cache_path)
         except Exception as e:
-            r18_html = get_r18_url(vid_id)
+            r18_html = get_r18_url(vid_id)    # we've never seen this video, so let's fetch the info
+            if (r18_html == None):
+                print("    ...Skipping: R18 Page was empty")
+                continue
+
             print("      (Action) Caching ./" + vid_id +".html")
             cache_html = open("./cache/" + vid_id+".html", 'wb')
             cache_html.write((r18_html))       
 
         
-
         if(r18_html == None):
                 print("    ...Skipping: Could not find video on R18 Library" + vid_id)
                 continue
@@ -614,7 +624,6 @@ def sort_jav(a_path, s):
                 movie_series_string = "("+_movie.series+")"
             meta.findercomment =  _movie.release_date + " " + movie_series_string + _movie.title + " jdc"
 
-
         # move the file into a folder (if we say to)
         if s['move-video-to-new-folder']:
             path = create_and_move_video_into_folder(new_fname, s, vid_id, _movie)
@@ -623,11 +632,16 @@ def sort_jav(a_path, s):
             download_cover(path, _movie, s)
 
 if __name__ == '__main__':
-
     print("--- sort_jav.py: Beginning sort, please wait ---")
     settings = read_file('settings_sort_jav.ini')
     for a_path in path_list:
-        sort_jav(a_path, settings)
+        try:
+            sort_jav(a_path, settings)
+        except:
+            print("        Skipping Directory " + a_path)
+            continue
+
+    executionTime = (time.time() - startTime)
     print("   ")
-    print("--- Sorting complete! ---")
+    print("--- Sorting completed in "+ str(executionTime) +" seconds. ---")
     print("   ")
