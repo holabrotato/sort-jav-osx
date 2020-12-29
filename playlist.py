@@ -88,7 +88,7 @@ class Videos:
 			return videos
 
 def main():
-	
+	os.chdir("/Volumes/WD/JAV/")
 	playlist = Playlist()
 	videos = Videos()
 	
@@ -99,7 +99,7 @@ def main():
 		playlist.add_track(path)
 	
 	playlist_xml = playlist.get_playlist()
-	with open('/Volumes/WD/all_jav.xspf','w') as mf:
+	with open('/Volumes/WD/VLC-ALL_JAV.xspf','w') as mf:
 		mf.write(xml.tostring(playlist_xml).decode('utf-8'))
 	
 main()

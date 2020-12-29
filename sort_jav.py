@@ -4,13 +4,13 @@ import re
 import touch
 import html
 import string
+from mutagen.mp4 import MP4
 from datetime import datetime
 import sys  # just so we can test exiting
 from osxmetadata import OSXMetaData, Tag, FINDER_COLOR_GREEN
 from bs4 import BeautifulSoup
 import requests
 import time
-
 startTime = time.time()
 
 class JAVMovie:
@@ -29,62 +29,62 @@ _movie = JAVMovie(code="")
 
 # path array
 path_list = [
-    '/Volumes/WD/JAV/',
+    # '/Volumes/WD/JAV/',
 
     # JAV SUB FOLDER
-    '/Volumes/WD/JAV/CAWD',
-    '/Volumes/WD/JAV/CBIKMV',
-    '/Volumes/WD/JAV/CJOD',
-    '/Volumes/WD/JAV/DASD',
-    '/Volumes/WD/JAV/DOKI',
-    '/Volumes/WD/JAV/EBOD',
-    '/Volumes/WD/JAV/EBVR',
-    '/Volumes/WD/JAV/EYAN',
+    # '/Volumes/WD/JAV/CAWD',
+    # '/Volumes/WD/JAV/CBIKMV',
+    # '/Volumes/WD/JAV/CJOD',
+    # '/Volumes/WD/JAV/DASD',
+    # '/Volumes/WD/JAV/DOKI',
+    # '/Volumes/WD/JAV/EBOD',
+    # '/Volumes/WD/JAV/EYAN',
     '/Volumes/WD/JAV/FSDSS',
-    '/Volumes/WD/JAV/HJBB',
-    '/Volumes/WD/JAV/HJMO',
-    '/Volumes/WD/JAV/HND',
-    '/Volumes/WD/JAV/HNVR',
-    '/Volumes/WD/JAV/IPVR',
-    '/Volumes/WD/JAV/IPX',
-    '/Volumes/WD/JAV/IPZ',
-    '/Volumes/WD/JAV/JUFD',
-    '/Volumes/WD/JAV/JUL',
-    '/Volumes/WD/JAV/KATU',
-    '/Volumes/WD/JAV/KIWVR',
-    '/Volumes/WD/JAV/MDVR',
-    '/Volumes/WD/JAV/MEYD',
-    '/Volumes/WD/JAV/MIAD',
-    '/Volumes/WD/JAV/MIDE',
-    '/Volumes/WD/JAV/MIGD',
-    '/Volumes/WD/JAV/MIZD',
-    '/Volumes/WD/JAV/MVSD',
-    '/Volumes/WD/JAV/MXGS',
-    '/Volumes/WD/JAV/NSPS',
-    '/Volumes/WD/JAV/PPPD',
-    '/Volumes/WD/JAV/RCTD',
-    '/Volumes/WD/JAV/SDJS',
-    '/Volumes/WD/JAV/SNIS',
-    '/Volumes/WD/JAV/SSNI',
-    '/Volumes/WD/JAV/STARS',
-    '/Volumes/WD/JAV/TEK',
-    '/Volumes/WD/JAV/UMD',
-    '/Volumes/WD/JAV/VRTM',
-    '/Volumes/WD/JAV/WAAA',
-    '/Volumes/WD/JAV/WANZ',
-    '/Volumes/WD/JAV/YMDD',
+    # '/Volumes/WD/JAV/HJMO',
+    # '/Volumes/WD/JAV/HND',
+    # '/Volumes/WD/JAV/HNVR',
+    # '/Volumes/WD/JAV/IPVR',
+    # '/Volumes/WD/JAV/IPX',
+    # '/Volumes/WD/JAV/IPZ',
+    # '/Volumes/WD/JAV/JUFD',
+    # '/Volumes/WD/JAV/JUL',
+    # '/Volumes/WD/JAV/KATU',
+    # '/Volumes/WD/JAV/KIWVR',
+    # '/Volumes/WD/JAV/MDVR',
+    # '/Volumes/WD/JAV/MEYD',
+    # '/Volumes/WD/JAV/MIAD',
+    # '/Volumes/WD/JAV/MIDE',
+    # '/Volumes/WD/JAV/MIGD',
+    # '/Volumes/WD/JAV/MIZD',
+    # '/Volumes/WD/JAV/MVSD',
+    # '/Volumes/WD/JAV/MXGS',
+    # '/Volumes/WD/JAV/PBD',
+    # '/Volumes/WD/JAV/NSPS',
+    # '/Volumes/WD/JAV/PBPD',
+    # '/Volumes/WD/JAV/PPPD',
+    # '/Volumes/WD/JAV/RCTD',
+    # '/Volumes/WD/JAV/SDJS',
+    # '/Volumes/WD/JAV/SNIS',
+    # '/Volumes/WD/JAV/SSNI',
+    # '/Volumes/WD/JAV/STARS',
+    # '/Volumes/WD/JAV/TEK',
+    # '/Volumes/WD/JAV/UMD',
+    # '/Volumes/WD/JAV/VRTM',
+    # '/Volumes/WD/JAV/WANZ',
+    '/Volumes/WD/JAV/WANZ-Endure',
+    # '/Volumes/WD/JAV/YMDD',
+    # '/Volumes/WD/JAV/Misc',
 
-    # VR Folders
-    '/Volumes/WD/VR/3DSVR',
-    '/Volumes/WD/VR/AJVR',
-    # '/Volumes/WD/VR/DSVR',
-    '/Volumes/WD/VR/KAVR',
-    '/Volumes/WD/VR/KBVR',
-    '/Volumes/WD/VR/PRVR',
-    '/Volumes/WD/VR/SAVR',
-    '/Volumes/WD/VR/SIVR',
-    '/Volumes/WD/VR/VRKM',
-    '/Volumes/WD/VR/WAVR'
+    # # VR Folders
+    # '/Volumes/WD/VR/AJVR',
+    # '/Volumes/WD/VR/EBVR',
+    # # '/Volumes/WD/VR/KAVR',
+    # '/Volumes/WD/VR/KBVR',
+    # '/Volumes/WD/VR/PRVR',
+    # '/Volumes/WD/VR/SAVR',
+    # '/Volumes/WD/VR/SIVR',
+    # '/Volumes/WD/VR/VRKM',
+    # '/Volumes/WD/VR/WAVR'
 ]
 
 def read_file(path):
@@ -222,7 +222,7 @@ def parse_r18_page(html, vid_id):
     actress_list = []
     actress_tags = soup.find(itemprop='actors').find_all(itemprop='name')
     for actress_tag in actress_tags:
-        actress_list.append(actress_tag.text.strip())
+        actress_list.append(fix_actress_name(actress_tag.text.strip()))
     jav_video.actresses = actress_list
 
     # get cover image url
@@ -310,6 +310,10 @@ def fix_actress_name(name):
         return 'Kitagawa Erika'
     elif name == 'Oshikawa Yuuri':
         return 'Oshikawa Yuri'
+    elif name == 'Shion Utsonomiya':
+        return 'Anzai Rara'
+    elif name == 'Rion':
+        return "Rara Anzai"
     return name
 
 def get_actress_from_html(_movie, s):
@@ -419,6 +423,7 @@ def download_cover(path, _movie, s ):
         fname += actress_string
 
     fullpath = os.path.join(base, fname)
+    print ("        (Fetching) downloading cover image")
     save_image_from_url_to_path(fullpath, img_link)
 
 
@@ -505,7 +510,7 @@ def strip_full_file_name(path):
 
 def strip_bad_data(path):
     """Remove any data from the path that might conflict"""
-    bad = ['hjd2048.com', 'h264', 'play999', 'h265', 'hhd800.com']
+    bad = ['hjd2048.com', 'h264', 'play999', 'h265', 'hhd800.com','fbfb.me@']
 
     for str_to_remove in bad:
         if path.find(str_to_remove) != -1:
@@ -578,14 +583,14 @@ def sort_jav(a_path, s):
             if os.stat(cache_path).st_size == 0:
                 raise Exception("found empty html file")
             javfile.close()
-            print("      (Action) Loading " + cache_path)
+            print("      (Loading Cache) Loading " + cache_path)
         except Exception as e:
             r18_html = get_r18_url(vid_id)    # we've never seen this video, so let's fetch the info
             if (r18_html == None):
                 print("    ...Skipping: R18 Page was empty")
                 continue
 
-            print("      (Action) Caching ./" + vid_id +".html")
+            print("      (Writing Cache) Caching ./" + vid_id +".html")
             cache_html = open("./cache/" + vid_id+".html", 'wb')
             cache_html.write((r18_html))       
 
@@ -607,11 +612,16 @@ def sort_jav(a_path, s):
             print("         (Metadata) Studio: " + _movie.studio[0:50])
             print("         (Metadata) Series: " + _movie.series[0:50])
             print("         (Metadata) Actress:" + ", ".join(_movie.actresses))
+
+            actress_string = ""
             for actress in _movie.actresses:
                 add_tag(actress, new_fname)
+                actress_string += actress + "#"
             
+            genre_string = ""
             for genre in _movie.genres:
                 add_tag(genre,new_fname)
+                genre_string += genre + "#"
 
             add_tag(_movie.label, new_fname)
             add_tag(_movie.studio, new_fname)
@@ -623,6 +633,18 @@ def sort_jav(a_path, s):
             else:
                 movie_series_string = "("+_movie.series+")"
             meta.findercomment =  _movie.release_date + " " + movie_series_string + _movie.title + " jdc"
+
+            # set if mp4
+            mp4_video_tags = MP4(new_fname)
+            mp4_video_tags['\xa9nam'] = _movie.code + " - " + actress_string
+            mp4_video_tags['\xa9gen'] = genre_string
+            mp4_video_tags['\xa9ART'] = _movie.studio
+            mp4_video_tags["desc"] = _movie.title
+            mp4_video_tags['\xa9alb'] = _movie.series
+            mp4_video_tags['purd'] = "Today"
+            mp4_video_tags.save()
+
+
 
         # move the file into a folder (if we say to)
         if s['move-video-to-new-folder']:
