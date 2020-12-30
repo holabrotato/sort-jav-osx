@@ -39,12 +39,10 @@ path_list = [
     # '/Volumes/WD/JAV/DOKI',
     # '/Volumes/WD/JAV/EBOD',
     # '/Volumes/WD/JAV/EYAN',
-    '/Volumes/WD/JAV/FSDSS',
+    # '/Volumes/WD/JAV/FSDSS',
     # '/Volumes/WD/JAV/HJMO',
     # '/Volumes/WD/JAV/HND',
-    # '/Volumes/WD/JAV/HNVR',
-    # '/Volumes/WD/JAV/IPVR',
-    # '/Volumes/WD/JAV/IPX',
+    '/Volumes/WD/JAV/IPX',
     # '/Volumes/WD/JAV/IPZ',
     # '/Volumes/WD/JAV/JUFD',
     # '/Volumes/WD/JAV/JUL',
@@ -71,7 +69,7 @@ path_list = [
     # '/Volumes/WD/JAV/UMD',
     # '/Volumes/WD/JAV/VRTM',
     # '/Volumes/WD/JAV/WANZ',
-    '/Volumes/WD/JAV/WANZ-Endure',
+    # '/Volumes/WD/JAV/WANZ-Endure',
     # '/Volumes/WD/JAV/YMDD',
     # '/Volumes/WD/JAV/Misc',
 
@@ -82,6 +80,8 @@ path_list = [
     # '/Volumes/WD/VR/KBVR',
     # '/Volumes/WD/VR/PRVR',
     # '/Volumes/WD/VR/SAVR',
+    # '/Volumes/WD/JAV/HNVR',
+    # '/Volumes/WD/JAV/IPVR',
     # '/Volumes/WD/VR/SIVR',
     # '/Volumes/WD/VR/VRKM',
     # '/Volumes/WD/VR/WAVR'
@@ -193,6 +193,46 @@ def get_r18_url(vid_id):
         return None
 
     return product_html
+
+
+def download_subtitles(_movie, path):
+    path = "/".join(path.split('/')[0:-1])
+    
+    print("      (Subtitles) Searching subtitlecat..")
+    if(os.path.isfile(path + "/" + _movie.code + "-en.srt")):
+        print("         (Skipping) We already have this subtitle")
+        return False
+
+    code = _movie.code
+    subtitlecat_html = get_page("https://www.subtitlecat.com/index.php?search=" + code)
+    soup = BeautifulSoup(subtitlecat_html, "html.parser")
+    subtitle_table = soup.find("table").find("tbody").find_all("tr")
+    for row in subtitle_table:
+        subtitle_url = row.find("a")["href"]
+        if(code.upper() in subtitle_url.upper()):
+            
+            srt_download_link = subtitle_url.split(".")[0] + "-en.srt"
+            opener = urllib.request.build_opener()
+            opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')]
+            urllib.request.install_opener(opener)
+            srt_download_link = "https://www.subtitlecat.com/" + srt_download_link
+            base = strip_partial_path_from_file(path)
+            fname = strip_definition_from_video(code)
+            fullpath = os.path.join(base, fname)
+            
+            try:
+                print("         Downloading subtitle to " + path + "/" + _movie.code + "-en.srt")
+                urllib.request.urlretrieve(srt_download_link, path + "/" + _movie.code + "-en.srt")
+            except Exception as E:
+                print("---- (ERROR) An error occurred downloading subtitles! ")
+                print(E)
+
+            break
+
+    return None
+
+
+
 
 def parse_r18_page(html, vid_id):
     jav_video = JAVMovie(code=vid_id)
@@ -416,7 +456,7 @@ def download_cover(path, _movie, s ):
     # TODO:
     # create the path name based on the settings file
     base = strip_partial_path_from_file(path)
-    fname = strip_definition_from_video(vid_id);
+    fname = strip_definition_from_video(vid_id)
     if (s['include-actress-name-in-cover']):
         fname += s['delimiter-between-video-name-actress']
         actress_string = get_actress_string(_movie, s)
@@ -510,7 +550,7 @@ def strip_full_file_name(path):
 
 def strip_bad_data(path):
     """Remove any data from the path that might conflict"""
-    bad = ['hjd2048.com', 'h264', 'play999', 'h265', 'hhd800.com','fbfb.me@']
+    bad = ['hjd2048.com', 'h264', 'play999', 'h265', 'hhd800.com','fbfb.me@','dhd1080.com@']
 
     for str_to_remove in bad:
         if path.find(str_to_remove) != -1:
@@ -543,7 +583,7 @@ def sort_jav(a_path, s):
         # only consider video files
         if not os.path.isdir(fullpath): # ignore DS Store and folders
 
-            if f == '.DS_Store' or file_extension == ".jpg":
+            if f == '.DS_Store' or file_extension == ".jpg" or file_extension == ".srt":
                 continue
 
             else:
@@ -644,7 +684,8 @@ def sort_jav(a_path, s):
             mp4_video_tags['purd'] = "Today"
             mp4_video_tags.save()
 
-
+        download_subtitles(_movie,path)
+        
 
         # move the file into a folder (if we say to)
         if s['move-video-to-new-folder']:
@@ -659,8 +700,9 @@ if __name__ == '__main__':
     for a_path in path_list:
         try:
             sort_jav(a_path, settings)
-        except:
-            print("        Skipping Directory " + a_path)
+        except Exception as E:
+            print("        (ERROR) Something went wrong processing : " + a_path)
+            print(E)
             continue
 
     executionTime = (time.time() - startTime)
