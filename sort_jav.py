@@ -11,6 +11,10 @@ from osxmetadata import OSXMetaData, Tag, FINDER_COLOR_GREEN
 from bs4 import BeautifulSoup
 import requests
 import time
+from xml.dom import minidom 
+import shutil
+import pathlib
+
 startTime = time.time()
 
 class JAVMovie:
@@ -25,6 +29,18 @@ class JAVMovie:
     def __init__(self, code):
         self.code = code
 
+    def actress_tags(self):
+        actress_string = ""
+        for actress in self.actresses:
+            actress_string += actress + "#"
+        return actress_string
+
+    def genre_tags(self):
+        genre_string = ""
+        for genre in self.genres:
+            genre_string += genre + "#"
+        return genre_string
+
 _movie = JAVMovie(code="")
 
 # path array
@@ -33,8 +49,7 @@ path_list = [
 
     # JAV SUB FOLDER
     # '/Volumes/WD/JAV/CAWD',
-    # '/Volumes/WD/JAV/CBIKMV',
-    # '/Volumes/WD/JAV/CJOD',
+    '/Volumes/WD/JAV/CJOD',
     # '/Volumes/WD/JAV/DASD',
     # '/Volumes/WD/JAV/DOKI',
     # '/Volumes/WD/JAV/EBOD',
@@ -42,13 +57,11 @@ path_list = [
     # '/Volumes/WD/JAV/FSDSS',
     # '/Volumes/WD/JAV/HJMO',
     # '/Volumes/WD/JAV/HND',
-    '/Volumes/WD/JAV/IPX',
+    # '/Volumes/WD/JAV/IPX',
     # '/Volumes/WD/JAV/IPZ',
     # '/Volumes/WD/JAV/JUFD',
     # '/Volumes/WD/JAV/JUL',
     # '/Volumes/WD/JAV/KATU',
-    # '/Volumes/WD/JAV/KIWVR',
-    # '/Volumes/WD/JAV/MDVR',
     # '/Volumes/WD/JAV/MEYD',
     # '/Volumes/WD/JAV/MIAD',
     # '/Volumes/WD/JAV/MIDE',
@@ -58,7 +71,7 @@ path_list = [
     # '/Volumes/WD/JAV/MXGS',
     # '/Volumes/WD/JAV/PBD',
     # '/Volumes/WD/JAV/NSPS',
-    # '/Volumes/WD/JAV/PBPD',
+    # '/Volumes/WD/JAV/PPBD',
     # '/Volumes/WD/JAV/PPPD',
     # '/Volumes/WD/JAV/RCTD',
     # '/Volumes/WD/JAV/SDJS',
@@ -73,15 +86,17 @@ path_list = [
     # '/Volumes/WD/JAV/YMDD',
     # '/Volumes/WD/JAV/Misc',
 
-    # # VR Folders
     # '/Volumes/WD/VR/AJVR',
     # '/Volumes/WD/VR/EBVR',
     # # '/Volumes/WD/VR/KAVR',
     # '/Volumes/WD/VR/KBVR',
+    # '/Volumes/WD/VR/CBIKMV',
     # '/Volumes/WD/VR/PRVR',
     # '/Volumes/WD/VR/SAVR',
-    # '/Volumes/WD/JAV/HNVR',
-    # '/Volumes/WD/JAV/IPVR',
+    # '/Volumes/WD/VR/HNVR',
+    # '/Volumes/WD/VR/IPVR',
+    # '/Volumes/WD/VR/MDVR',
+    # '/Volumes/WD/VR/KIWVR',
     # '/Volumes/WD/VR/SIVR',
     # '/Volumes/WD/VR/VRKM',
     # '/Volumes/WD/VR/WAVR'
@@ -200,8 +215,13 @@ def download_subtitles(_movie, path):
     
     print("      (Subtitles) Searching subtitlecat..")
     if(os.path.isfile(path + "/" + _movie.code + "-en.srt")):
-        print("         (Skipping) We already have this subtitle")
-        return False
+        print("      (Skipping) We already have this subtitle")
+        return True
+    elif os.path.isfile("/Volumes/WD/Sub/" + _movie.code + ".srt"):
+        my_file = pathlib.Path("/Volumes/WD/Sub/" + _movie.code + ".srt")
+        to_file = pathlib.Path(path + "/" + _movie.code + "-en.srt")
+        shutil.copyfile(my_file, to_file)
+        return True
 
     code = _movie.code
     subtitlecat_html = get_page("https://www.subtitlecat.com/index.php?search=" + code)
@@ -221,15 +241,16 @@ def download_subtitles(_movie, path):
             fullpath = os.path.join(base, fname)
             
             try:
-                print("         Downloading subtitle to " + path + "/" + _movie.code + "-en.srt")
+                print("         Downloading subtitle: " + srt_download_link)
                 urllib.request.urlretrieve(srt_download_link, path + "/" + _movie.code + "-en.srt")
+                return True
             except Exception as E:
                 print("---- (ERROR) An error occurred downloading subtitles! ")
                 print(E)
 
             break
 
-    return None
+    return False
 
 
 
@@ -242,8 +263,12 @@ def parse_r18_page(html, vid_id):
     jav_video.title = soup.find('cite',itemprop='name').get_text().strip()
 
     # release date
-    jav_video.release_date = soup.find(itemprop='dateCreated').get_text().strip()
 
+    
+    datetime_str = soup.find(itemprop='dateCreated').get_text().strip().replace("Sept", "Sep")
+    datetime_object = datetime.strptime(datetime_str, '%b. %d, %Y')
+
+    jav_video.release_date = datetime_object.strftime('%Y-%m-%d')
     # series 
     jav_video.series = soup.find(class_="product-details").find_all("dl")[1].find_all("dd")[3].get_text().strip()
 
@@ -557,11 +582,6 @@ def strip_bad_data(path):
             path = path.replace(str_to_remove, '')
 
     return path
-
-def replace_whitespace(t):
-    regex = re.compile(r'[\n\r\t]+')
-    s = regex.sub("", t)
-    return s
     
 def add_tag(tag, file):
     tag_results = os.system("tag --add \"" + tag + "\" " + file)
@@ -594,7 +614,6 @@ def sort_jav(a_path, s):
                     already_processed = "jdc" in meta.findercomment
                     if already_processed and s['skip-processed']:
                         continue
-
                 temp.append(fullpath)
 
     for path in temp:
@@ -613,21 +632,25 @@ def sort_jav(a_path, s):
             print("    ...Skipping {} , could not find JAV ID ".format(vid_id))
             continue
         
-        # let's check our cache
         try:
+            # 
+            #  Check if we've seen this video before in our cache of html files 
+            #
             cache_path = './cache/' + vid_id + ".html"
             javfile = open(cache_path, "r")
-            r18_html = javfile.read()  #  If the cache exists, let's just read the file 
-                                       #     to prevent unnecessary http calls
+            r18_html = javfile.read()
             r18_html = r18_html.replace("\n","")
             if os.stat(cache_path).st_size == 0:
                 raise Exception("found empty html file")
             javfile.close()
             print("      (Loading Cache) Loading " + cache_path)
         except Exception as e:
-            r18_html = get_r18_url(vid_id)    # we've never seen this video, so let's fetch the info
+            #
+            #  Download the R18 page, cache it locally
+            #
+            r18_html = get_r18_url(vid_id)    
             if (r18_html == None):
-                print("    ...Skipping: R18 Page was empty")
+                print("    ...Skipping: Could not find video on R18.")
                 continue
 
             print("      (Writing Cache) Caching ./" + vid_id +".html")
@@ -644,9 +667,10 @@ def sort_jav(a_path, s):
 
         # rename the file according to our convention
         new_fname = rename_file(path, _movie, s, vid_id)
-                
-        if s['osx-add-tags']:
-            meta = OSXMetaData(new_fname)
+        meta = OSXMetaData(new_fname)
+
+        if s['add-osx-tags']:
+            
             print("         (Metadata) Code:   " + _movie.code)
             print("         (Metadata) Title:  " + _movie.title[0:60])
             print("         (Metadata) Studio: " + _movie.studio[0:50])
@@ -674,17 +698,94 @@ def sort_jav(a_path, s):
                 movie_series_string = "("+_movie.series+")"
             meta.findercomment =  _movie.release_date + " " + movie_series_string + _movie.title + " jdc"
 
-            # set if mp4
-            mp4_video_tags = MP4(new_fname)
-            mp4_video_tags['\xa9nam'] = _movie.code + " - " + actress_string
-            mp4_video_tags['\xa9gen'] = genre_string
-            mp4_video_tags['\xa9ART'] = _movie.studio
-            mp4_video_tags["desc"] = _movie.title
-            mp4_video_tags['\xa9alb'] = _movie.series
-            mp4_video_tags['purd'] = "Today"
-            mp4_video_tags.save()
+        if s['add-vlc-tags']:
+            # Set MP4 metadata for VLC
+            try:
+                mp4_video_tags = MP4(new_fname)
+                mp4_video_tags['\xa9nam'] = _movie.code + " - " + _movie.actress_tags()
+                mp4_video_tags['\xa9gen'] = _movie.genre_tags()
+                mp4_video_tags['\xa9ART'] = _movie.studio
+                mp4_video_tags["desc"] = _movie.title
+                mp4_video_tags['\xa9alb'] = _movie.series
+                mp4_video_tags['purd'] = "Today"
+                mp4_video_tags.save()
+            except:
+                print("      (ERROR)  Could not add VLC metadata: " + _movie.code )
 
-        download_subtitles(_movie,path)
+        if s['add-emby-nfo']:
+            #Define document
+            xmlFile = minidom.Document() 
+
+            #Create base element
+            baseElement = xmlFile.createElement("movie")
+            xmlFile.appendChild(baseElement)
+
+            # title
+            titleElement = xmlFile.createElement("title")
+            titleElement.appendChild(xmlFile.createTextNode(_movie.code))
+            baseElement.appendChild(titleElement)
+
+            # sort title
+            studioElement = xmlFile.createElement("sorttitle")
+            studioElement.appendChild(xmlFile.createTextNode(_movie.code))
+            baseElement.appendChild(studioElement)
+
+            # studio
+            studioElement = xmlFile.createElement("studio")
+            studioElement.appendChild(xmlFile.createTextNode(_movie.studio))
+            baseElement.appendChild(studioElement)
+
+            # plot
+            studioElement = xmlFile.createElement("plot")
+            studioElement.appendChild(xmlFile.createTextNode(_movie.title))
+            baseElement.appendChild(studioElement)
+
+            # premiered
+            dateElement = xmlFile.createElement("premiered")
+            dateElement.appendChild(xmlFile.createTextNode(_movie.release_date))
+            print(_movie.release_date)
+            baseElement.appendChild(dateElement)
+                        
+            # thumb
+            thumbElement = xmlFile.createElement("thumb")
+            thumbElement.setAttribute("preview", _movie.cover_url)
+            thumbElement.setAttribute("aspect","set.poster")
+            thumbElement.appendChild(xmlFile.createTextNode(_movie.cover_url))
+            baseElement.appendChild(thumbElement)
+
+            for actress in _movie.actresses:
+                actorElement = xmlFile.createElement("actor")
+                nameElement = xmlFile.createElement("name")
+                textElement = xmlFile.createTextNode(actress)
+                nameElement.appendChild(textElement)
+                actorElement.appendChild(nameElement)
+                baseElement.appendChild(actorElement)
+
+            for genre in _movie.genres:
+                genreElement = xmlFile.createElement("genre")
+                textElement = xmlFile.createTextNode(genre)
+                genreElement.appendChild(textElement)
+                baseElement.appendChild(genreElement)
+                genreElement = xmlFile.createElement("tag")
+                textElement = xmlFile.createTextNode(genre)
+                genreElement.appendChild(textElement)
+                baseElement.appendChild(genreElement)
+                
+            nfo_str = minidom.parseString(xmlFile.toxml(encoding='utf-8')).toprettyxml(indent="    ")
+            with open(a_path + "/" + vid_id +".nfo", 'w') as fid:
+                fid.write(nfo_str)
+
+
+
+
+        if s['download-subs']:
+            try:
+                found_subs = download_subtitles(_movie,path)
+                if found_subs:
+                    print("adding tags")
+                    add_tag("Sub", new_fname)
+            except Exception as e:
+                print(e)
         
 
         # move the file into a folder (if we say to)

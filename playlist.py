@@ -3,6 +3,7 @@ import os
 
 ext_list = ['.mp4', '.mkv', '.avi', '.flv', '.mov', '.wmv', '.vob',
 '.mpg','.3gp', '.m4v']		#List of extensions to be checked.
+pathlist = [ '/Volumes/WD/JAV/' ]	# List of all directories to be scanned.
 
 check_subdirectories = True		#Set false to get files only from cwd.
 
@@ -61,7 +62,6 @@ class Videos:
 	def get_videos(self):
 	#Returns list of video files in the directory.
 		if check_subdirectories == True:
-			pathlist = ['/Volumes/WD/JAV/']	#List of all directories to be scanned.
 			for root, dirs, files in os.walk(os.getcwd()):
 				for name in dirs:
 						subdir_path = os.path.join(root, name)
@@ -88,11 +88,12 @@ class Videos:
 			return videos
 
 def main():
-	os.chdir("/Volumes/WD/JAV/")
 	playlist = Playlist()
 	videos = Videos()
 	
+	os.chdir("/Volumes/WD/JAV/")
 	video_files = videos.get_videos()
+	
 	video_paths = videos.edit_paths(video_files)
 	
 	for path in video_paths:
