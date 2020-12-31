@@ -25,6 +25,7 @@ class JAVMovie:
     release_date = ""
     cover_url = ""
     series = ""
+    runtime = 0
     
     def __init__(self, code):
         self.code = code
@@ -293,6 +294,9 @@ def parse_r18_page(html, vid_id):
     # get cover image url
     jav_video.cover_url = soup.find(class_='detail-single-picture').find("img")["src"]
 
+
+    #runtime 
+    jav_video.duration = soup.find(itemprop='duration').text.strip().replace("min.", "")
     return jav_video
 
 
@@ -740,10 +744,14 @@ def sort_jav(a_path, s):
             studioElement.appendChild(xmlFile.createTextNode(_movie.title))
             baseElement.appendChild(studioElement)
 
+            # plot
+            runtimeElement = xmlFile.createElement("runtime")
+            runtimeElement.appendChild(xmlFile.createTextNode(str(_movie.runtime)))
+            baseElement.appendChild(runtimeElement)
+
             # premiered
             dateElement = xmlFile.createElement("premiered")
             dateElement.appendChild(xmlFile.createTextNode(_movie.release_date))
-            print(_movie.release_date)
             baseElement.appendChild(dateElement)
                         
             # thumb
