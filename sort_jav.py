@@ -50,7 +50,7 @@ path_list = [
 
     # JAV SUB FOLDER
     # '/Volumes/WD/JAV/CAWD',
-    '/Volumes/WD/JAV/CJOD',
+    # '/Volumes/WD/JAV/CJOD',
     # '/Volumes/WD/JAV/DASD',
     # '/Volumes/WD/JAV/DOKI',
     # '/Volumes/WD/JAV/EBOD',
@@ -83,7 +83,7 @@ path_list = [
     # '/Volumes/WD/JAV/UMD',
     # '/Volumes/WD/JAV/VRTM',
     # '/Volumes/WD/JAV/WANZ',
-    # '/Volumes/WD/JAV/WANZ-Endure',
+    '/Volumes/WD/JAV/WANZ-Endure',
     # '/Volumes/WD/JAV/YMDD',
     # '/Volumes/WD/JAV/Misc',
 
@@ -266,7 +266,7 @@ def parse_r18_page(html, vid_id):
     # release date
 
     
-    datetime_str = soup.find(itemprop='dateCreated').get_text().strip().replace("Sept", "Sep")
+    datetime_str = soup.find(itemprop='dateCreated').get_text().strip().replace("Sept", "Sep").replace("June", "Jun.").replace("July","Jul.").replace("May", "May.")
     datetime_object = datetime.strptime(datetime_str, '%b. %d, %Y')
 
     jav_video.release_date = datetime_object.strftime('%Y-%m-%d')
@@ -749,6 +749,11 @@ def sort_jav(a_path, s):
             runtimeElement.appendChild(xmlFile.createTextNode(str(_movie.runtime)))
             baseElement.appendChild(runtimeElement)
 
+            # premiered
+            taglineElement = xmlFile.createElement("tagline")
+            taglineElement.appendChild(xmlFile.createTextNode(_movie.series))
+            taglineElement.appendChild(taglineElement)
+                        
             # premiered
             dateElement = xmlFile.createElement("premiered")
             dateElement.appendChild(xmlFile.createTextNode(_movie.release_date))
