@@ -3,6 +3,7 @@ import urllib.request
 import re
 import touch
 import html
+import base64
 import string
 from mutagen.mp4 import MP4
 from datetime import datetime
@@ -49,38 +50,36 @@ path_list = [
     # '/Volumes/WD/JAV/',
 
     # JAV SUB FOLDER
-    # '/Volumes/WD/JAV/Chijo_Heaven',
-    # '/Volumes/WD/JAV/Das',
-    # '/Volumes/WD/JAV/E-BODY',
-    # '/Volumes/WD/JAV/Faleno',
-    # '/Volumes/WD/JAV/Fitch',
-    # '/Volumes/WD/JAV/Hajime_Kikaku',
-    # '/Volumes/WD/JAV/Hon_Naka',
-    # '/Volumes/WD/JAV/Idea_Pocket',
-    # '/Volumes/WD/JAV/KATU',
-    # '/Volumes/WD/JAV/Leo',
-    # '/Volumes/WD/JAV/MADONNA',
-    # '/Volumes/WD/JAV/MOODYZ',
-    # '/Volumes/WD/JAV/MUTEKI',
-    # '/Volumes/WD/JAV/Maxing',
-    # '/Volumes/WD/JAV/Momotaro_Eizo',
-    # '/Volumes/WD/JAV/Ms_Video_Group',
-    # '/Volumes/WD/JAV/Nagae_Style',
-    # '/Volumes/WD/JAV/OPPAI',
-    # '/Volumes/WD/JAV/PREMIUM',
-    # '/Volumes/WD/JAV/Prestige',
-    # '/Volumes/WD/JAV/Pussy_Bank',
-    # '/Volumes/WD/JAV/ROCKET',
-    # '/Volumes/WD/JAV/S1_NO1_STYLE',
-    # '/Volumes/WD/JAV/SEX_Agent_Daydreamers',
-    # '/Volumes/WD/JAV/SODCreate',
-    # '/Volumes/WD/JAV/STAR_PARADISE',
-    # '/Volumes/WD/JAV/Tameike_Goro',
-    # '/Volumes/WD/JAV/VnR_PRODUCE',
-    # '/Volumes/WD/JAV/WANZ',
-    # '/Volumes/WD/JAV/WANZ-Endure',
-    '/Volumes/WD/JAV/kawaii/CAWD-152',
-    # '/Volumes/WD/JAV/Misc'
+    '/Volumes/WD/JAV/Chijo_Heaven', 
+    '/Volumes/WD/JAV/Das',
+    '/Volumes/WD/JAV/E-BODY',
+    '/Volumes/WD/JAV/Faleno',
+    '/Volumes/WD/JAV/Fitch',
+    '/Volumes/WD/JAV/Hajime_Kikaku',
+    '/Volumes/WD/JAV/Hon_Naka',
+    '/Volumes/WD/JAV/Idea_Pocket',
+    '/Volumes/WD/JAV/Leo',
+    '/Volumes/WD/JAV/MADONNA',
+    '/Volumes/WD/JAV/MOODYZ',
+    '/Volumes/WD/JAV/MUTEKI',
+    '/Volumes/WD/JAV/Maxing',
+    '/Volumes/WD/JAV/Momotaro_Eizo',
+    '/Volumes/WD/JAV/Ms_Video_Group',
+    '/Volumes/WD/JAV/Nagae_Style',
+    '/Volumes/WD/JAV/OPPAI',
+    '/Volumes/WD/JAV/PREMIUM',
+    '/Volumes/WD/JAV/Prestige',
+    '/Volumes/WD/JAV/Pussy_Bank',
+    '/Volumes/WD/JAV/ROCKET',
+    '/Volumes/WD/JAV/S1_NO1_STYLE',
+    '/Volumes/WD/JAV/SEX_Agent_Daydreamers',
+    '/Volumes/WD/JAV/SODCreate',
+    '/Volumes/WD/JAV/STAR_PARADISE',
+    '/Volumes/WD/JAV/Tameike_Goro',
+    '/Volumes/WD/JAV/VnR_PRODUCE',
+    '/Volumes/WD/JAV/WANZ',
+    '/Volumes/WD/JAV/WANZ-Endure',
+    '/Volumes/WD/JAV/Misc'
 
     # '/Volumes/WD/VR/AJVR',
     # '/Volumes/WD/VR/EBVR',
@@ -210,12 +209,12 @@ def download_subtitles(_movie, path):
     path = "/".join(path.split('/')[0:-1])
     
     print("      (Subtitles) Searching subtitlecat..")
-    if(os.path.isfile(path + "/" + _movie.code + "-en.srt")):
+    if(os.path.isfile(path + "/" + _movie.code + ".default.en.srt")):
         print("      (Skipping) We already have this subtitle")
         return True
     elif os.path.isfile("/Volumes/WD/Sub/" + _movie.code + ".srt"):
         my_file = pathlib.Path("/Volumes/WD/Sub/" + _movie.code + ".srt")
-        to_file = pathlib.Path(path + "/" + _movie.code + "-en.srt")
+        to_file = pathlib.Path(path + "/" + _movie.code + ".en.default.srt")
         shutil.copyfile(my_file, to_file)
         return True
 
@@ -297,6 +296,7 @@ def parse_r18_page(html, vid_id):
 
 
 def rename_file(path, _movie, s, vid_id):
+
     """Rename the file per our settings
     Returns the name of the file regardless of whether it has been renamed"""
     actress_string = get_actress_string(_movie, s)
@@ -487,10 +487,10 @@ def download_cover(path, _movie, s ):
         fname += actress_string
 
     fullpath = os.path.join(base, fname)
-    print ("        (Fetching) downloading cover image")
     if os.path.isfile(fullpath+".jpg"):
         return fullpath + ".jpg"
     else:
+        print ("        (Fetching) downloading cover image")
         return save_image_from_url_to_path(fullpath, img_link)
 
 
@@ -743,7 +743,7 @@ def sort_jav(a_path, s):
 
             # plot
             studioElement = xmlFile.createElement("plot")
-            studioElement.appendChild(xmlFile.createTextNode(_movie.title))
+            studioElement.appendChild(xmlFile.createTextNode( _movie.title ))
             baseElement.appendChild(studioElement)
 
             # runtime
@@ -752,21 +752,15 @@ def sort_jav(a_path, s):
             baseElement.appendChild(runtimeElement)
 
             # premiered
-            # taglineElement = xmlFile.createElement("tagline")
-            # taglineElement.appendChild(xmlFile.createTextNode(_movie.series))
-            # taglineElement.appendChild(taglineElement)
+            taglineElement = xmlFile.createElement("tagline")
+            taglineElement.appendChild(xmlFile.createTextNode(_movie.series))
+            baseElement.appendChild(taglineElement)
                         
             # premiered
             dateElement = xmlFile.createElement("premiered")
             dateElement.appendChild(xmlFile.createTextNode(_movie.release_date))
             baseElement.appendChild(dateElement)
                         
-            # thumb
-            # thumbElement = xmlFile.createElement("thumb")
-            # thumbElement.setAttribute("preview", _movie.local_cover_path)
-            # thumbElement.setAttribute("aspect","set.poster")
-            # thumbElement.appendChild(xmlFile.createTextNode(_movie.local_cover_path))
-            # baseElement.appendChild(thumbElement)
 
             for actress in _movie.actresses:
                 actorElement = xmlFile.createElement("actor")
@@ -787,7 +781,8 @@ def sort_jav(a_path, s):
                 baseElement.appendChild(genreElement)
                 
             nfo_str = minidom.parseString(xmlFile.toxml(encoding='utf-8')).toprettyxml(indent="    ")
-            with open(a_path + "/" + vid_id +".nfo", 'w') as fid:
+            nfo_filename = str(os.path.splitext(path)[0]).upper() + '.nfo'
+            with open(nfo_filename, 'w') as fid:
                 fid.write(nfo_str)
 
 
@@ -797,7 +792,7 @@ def sort_jav(a_path, s):
             try:
                 found_subs = download_subtitles(_movie,path)
                 if found_subs:
-                    print("adding tags")
+                    print("             Found subtitles!")
                     add_tag("Sub", new_fname)
             except Exception as e:
                 print(e)
