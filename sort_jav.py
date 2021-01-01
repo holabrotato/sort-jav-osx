@@ -49,47 +49,42 @@ path_list = [
     # '/Volumes/WD/JAV/',
 
     # JAV SUB FOLDER
-    # '/Volumes/WD/JAV/CAWD',
-    # '/Volumes/WD/JAV/CJOD',
-    # '/Volumes/WD/JAV/DASD',
-    # '/Volumes/WD/JAV/DOKI',
-    # '/Volumes/WD/JAV/EBOD',
-    # '/Volumes/WD/JAV/EYAN',
-    # '/Volumes/WD/JAV/FSDSS',
-    # '/Volumes/WD/JAV/HJMO',
-    # '/Volumes/WD/JAV/HND',
-    # '/Volumes/WD/JAV/IPX',
-    # '/Volumes/WD/JAV/IPZ',
-    # '/Volumes/WD/JAV/JUFD',
-    # '/Volumes/WD/JAV/JUL',
+    # '/Volumes/WD/JAV/Chijo_Heaven',
+    # '/Volumes/WD/JAV/Das',
+    # '/Volumes/WD/JAV/E-BODY',
+    # '/Volumes/WD/JAV/Faleno',
+    # '/Volumes/WD/JAV/Fitch',
+    # '/Volumes/WD/JAV/Hajime_Kikaku',
+    # '/Volumes/WD/JAV/Hon_Naka',
+    # '/Volumes/WD/JAV/Idea_Pocket',
     # '/Volumes/WD/JAV/KATU',
-    # '/Volumes/WD/JAV/MEYD',
-    # '/Volumes/WD/JAV/MIAD',
-    # '/Volumes/WD/JAV/MIDE',
-    # '/Volumes/WD/JAV/MIGD',
-    # '/Volumes/WD/JAV/MIZD',
-    # '/Volumes/WD/JAV/MVSD',
-    # '/Volumes/WD/JAV/MXGS',
-    # '/Volumes/WD/JAV/PBD',
-    # '/Volumes/WD/JAV/NSPS',
-    # '/Volumes/WD/JAV/PPBD',
-    # '/Volumes/WD/JAV/PPPD',
-    # '/Volumes/WD/JAV/RCTD',
-    # '/Volumes/WD/JAV/SDJS',
-    # '/Volumes/WD/JAV/SNIS',
-    # '/Volumes/WD/JAV/SSNI',
-    # '/Volumes/WD/JAV/STARS',
-    # '/Volumes/WD/JAV/TEK',
-    # '/Volumes/WD/JAV/UMD',
-    # '/Volumes/WD/JAV/VRTM',
+    # '/Volumes/WD/JAV/Leo',
+    # '/Volumes/WD/JAV/MADONNA',
+    # '/Volumes/WD/JAV/MOODYZ',
+    # '/Volumes/WD/JAV/MUTEKI',
+    # '/Volumes/WD/JAV/Maxing',
+    # '/Volumes/WD/JAV/Momotaro_Eizo',
+    # '/Volumes/WD/JAV/Ms_Video_Group',
+    # '/Volumes/WD/JAV/Nagae_Style',
+    # '/Volumes/WD/JAV/OPPAI',
+    # '/Volumes/WD/JAV/PREMIUM',
+    # '/Volumes/WD/JAV/Prestige',
+    # '/Volumes/WD/JAV/Pussy_Bank',
+    # '/Volumes/WD/JAV/ROCKET',
+    # '/Volumes/WD/JAV/S1_NO1_STYLE',
+    # '/Volumes/WD/JAV/SEX_Agent_Daydreamers',
+    # '/Volumes/WD/JAV/SODCreate',
+    # '/Volumes/WD/JAV/STAR_PARADISE',
+    # '/Volumes/WD/JAV/Tameike_Goro',
+    # '/Volumes/WD/JAV/VnR_PRODUCE',
     # '/Volumes/WD/JAV/WANZ',
-    '/Volumes/WD/JAV/WANZ-Endure',
-    # '/Volumes/WD/JAV/YMDD',
-    # '/Volumes/WD/JAV/Misc',
+    # '/Volumes/WD/JAV/WANZ-Endure',
+    '/Volumes/WD/JAV/kawaii/CAWD-152',
+    # '/Volumes/WD/JAV/Misc'
 
     # '/Volumes/WD/VR/AJVR',
     # '/Volumes/WD/VR/EBVR',
-    # # '/Volumes/WD/VR/KAVR',
+    # '/Volumes/WD/VR/KAVR',
     # '/Volumes/WD/VR/KBVR',
     # '/Volumes/WD/VR/CBIKMV',
     # '/Volumes/WD/VR/PRVR',
@@ -493,7 +488,11 @@ def download_cover(path, _movie, s ):
 
     fullpath = os.path.join(base, fname)
     print ("        (Fetching) downloading cover image")
-    save_image_from_url_to_path(fullpath, img_link)
+    if os.path.isfile(fullpath+".jpg"):
+        return fullpath + ".jpg"
+    else:
+        return save_image_from_url_to_path(fullpath, img_link)
+
 
 
 def save_image_from_url_to_path(path, url):
@@ -510,6 +509,7 @@ def save_image_from_url_to_path(path, url):
         temp_location = drive + os.sep + path + '.jpg'
         os.rename(path + ".jpg", temp_location)
         os.rename(temp_location, path + ".jpg")
+        return temp_location + ".jpg"
     except:
         pass
 
@@ -607,7 +607,7 @@ def sort_jav(a_path, s):
         # only consider video files
         if not os.path.isdir(fullpath): # ignore DS Store and folders
 
-            if f == '.DS_Store' or file_extension == ".jpg" or file_extension == ".srt":
+            if f == '.DS_Store' or file_extension == ".jpg" or file_extension == ".srt" or file_extension == ".nfo":
                 continue
 
             else:
@@ -715,6 +715,8 @@ def sort_jav(a_path, s):
                 mp4_video_tags.save()
             except:
                 print("      (ERROR)  Could not add VLC metadata: " + _movie.code )
+        if s['include-cover']:
+            _movie.local_cover_path = download_cover(path, _movie, s)
 
         if s['add-emby-nfo']:
             #Define document
@@ -744,15 +746,15 @@ def sort_jav(a_path, s):
             studioElement.appendChild(xmlFile.createTextNode(_movie.title))
             baseElement.appendChild(studioElement)
 
-            # plot
+            # runtime
             runtimeElement = xmlFile.createElement("runtime")
             runtimeElement.appendChild(xmlFile.createTextNode(str(_movie.runtime)))
             baseElement.appendChild(runtimeElement)
 
             # premiered
-            taglineElement = xmlFile.createElement("tagline")
-            taglineElement.appendChild(xmlFile.createTextNode(_movie.series))
-            taglineElement.appendChild(taglineElement)
+            # taglineElement = xmlFile.createElement("tagline")
+            # taglineElement.appendChild(xmlFile.createTextNode(_movie.series))
+            # taglineElement.appendChild(taglineElement)
                         
             # premiered
             dateElement = xmlFile.createElement("premiered")
@@ -760,11 +762,11 @@ def sort_jav(a_path, s):
             baseElement.appendChild(dateElement)
                         
             # thumb
-            thumbElement = xmlFile.createElement("thumb")
-            thumbElement.setAttribute("preview", _movie.cover_url)
-            thumbElement.setAttribute("aspect","set.poster")
-            thumbElement.appendChild(xmlFile.createTextNode(_movie.cover_url))
-            baseElement.appendChild(thumbElement)
+            # thumbElement = xmlFile.createElement("thumb")
+            # thumbElement.setAttribute("preview", _movie.local_cover_path)
+            # thumbElement.setAttribute("aspect","set.poster")
+            # thumbElement.appendChild(xmlFile.createTextNode(_movie.local_cover_path))
+            # baseElement.appendChild(thumbElement)
 
             for actress in _movie.actresses:
                 actorElement = xmlFile.createElement("actor")
@@ -805,8 +807,7 @@ def sort_jav(a_path, s):
         if s['move-video-to-new-folder']:
             path = create_and_move_video_into_folder(new_fname, s, vid_id, _movie)
         # get the cover (if we say to)
-        if s['include-cover']:
-            download_cover(path, _movie, s)
+
 
 if __name__ == '__main__':
     print("--- sort_jav.py: Beginning sort, please wait ---")
