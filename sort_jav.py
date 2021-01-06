@@ -49,7 +49,6 @@ _movie = JAVMovie(code="")
 path_list = [
     # '/Volumes/WD/JAV/',
 
-    # JAV SUB FOLDER
     '/Volumes/WD/JAV/Chijo_Heaven', 
     '/Volumes/WD/JAV/Das',
     '/Volumes/WD/JAV/E-BODY',
@@ -64,7 +63,6 @@ path_list = [
     '/Volumes/WD/JAV/MUTEKI',
     '/Volumes/WD/JAV/Maxing',
     '/Volumes/WD/JAV/Momotaro_Eizo',
-    '/Volumes/WD/JAV/Ms_Video_Group',
     '/Volumes/WD/JAV/Nagae_Style',
     '/Volumes/WD/JAV/OPPAI',
     '/Volumes/WD/JAV/PREMIUM',
@@ -79,7 +77,7 @@ path_list = [
     '/Volumes/WD/JAV/VnR_PRODUCE',
     '/Volumes/WD/JAV/WANZ',
     '/Volumes/WD/JAV/WANZ-Endure',
-    '/Volumes/WD/JAV/Misc'
+    '/Volumes/WD/JAV/Misc',
 
     # '/Volumes/WD/VR/AJVR',
     # '/Volumes/WD/VR/EBVR',
@@ -213,7 +211,7 @@ def download_subtitles(_movie, path):
         print("      (Skipping) We already have this subtitle")
         return True
     elif os.path.isfile("/Volumes/WD/Sub/" + _movie.code + ".srt"):
-        my_file = pathlib.Path("/Volumes/WD/Sub/" + _movie.code + ".srt")
+        my_file = pathlib.Path("/Volumes/WD/Sub/" + _movie.code + "-en.srt")
         to_file = pathlib.Path(path + "/" + _movie.code + ".en.default.srt")
         shutil.copyfile(my_file, to_file)
         return True
@@ -226,7 +224,7 @@ def download_subtitles(_movie, path):
         subtitle_url = row.find("a")["href"]
         if(code.upper() in subtitle_url.upper()):
             
-            srt_download_link = subtitle_url.split(".")[0] + "-en.srt"
+            srt_download_link = subtitle_url.split(".")[0] + ".srt"
             opener = urllib.request.build_opener()
             opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')]
             urllib.request.install_opener(opener)
