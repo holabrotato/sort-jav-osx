@@ -4,6 +4,6 @@ chardet==3.0.4
 idna==2.7
 osxmetadata==0.99.11
 beautifulsoup4==4.9.3
-beautifulsoup4
 requests==2.20.1
 urllib3==1.24.1
+mutagen>=1.45.0
