@@ -8,18 +8,20 @@ import base64
 from bs4 import BeautifulSoup
 
 # looks on local disk for covers and uploads to emby
-upload_covers = True
+upload_covers = False
 
 # makes a request to emby for all actors, then queries r18 and fetches to disk
-fetch_actress_images = False
+fetch_actress_images = True
 
 # looks at disk cache of actress images, and uplaods to emby
-upload_actress_images = False
+upload_actress_images = True
 
 
-emby_api_key = 'f3da2238d43740a294abb02ea858e536'
+emby_api_key = '0cdd25865b534965a35eff4e67262bbf'
 r18_actress_base = 'https://pics.r18.com/mono/actjpgs/'
 cache_path = "/Volumes/WD/Cache/actress/"
+
+startTime = time.time()
 
 def strip_multi(s):
     s = s.replace("_A","").replace("_B","").replace("_C","").replace("_D","").replace("_E","")
@@ -29,40 +31,59 @@ def strip_multi(s):
 #http://localhost:8096/emby/Users/Public
 
 path_list = [
-    # '/Volumes/WD/JAV/',
-
     # JAV SUB FOLDER
-    # '/Volumes/WD/JAV/Chijo_Heaven',
-    # '/Volumes/WD/JAV/Das',
-    # '/Volumes/WD/JAV/E-BODY',
-    # '/Volumes/WD/JAV/Faleno',
-    # '/Volumes/WD/JAV/Fitch',
-    # '/Volumes/WD/JAV/kawaii',
-    # '/Volumes/WD/JAV/Hajime_Kikaku',
-    # '/Volumes/WD/JAV/Hon_Naka',
-    # '/Volumes/WD/JAV/Idea_Pocket',
-    # '/Volumes/WD/JAV/Leo',
+    '/Volumes/WD/JAV/Chijo_Heaven',
+    '/Volumes/WD/JAV/Das',
+    '/Volumes/WD/JAV/E-BODY',
+    '/Volumes/WD/JAV/Faleno',
+    '/Volumes/WD/JAV/Fitch',
+    '/Volumes/WD/JAV/kawaii',
+    '/Volumes/WD/JAV/Hajime_Kikaku',
+    '/Volumes/WD/JAV/Hon_Naka',
+    '/Volumes/WD/JAV/Idea_Pocket',
+    '/Volumes/WD/JAV/Leo',
     '/Volumes/WD/JAV/MADONNA',
-    # '/Volumes/WD/JAV/MOODYZ',
-    # '/Volumes/WD/JAV/MUTEKI',
-    # '/Volumes/WD/JAV/Maxing',
-    # '/Volumes/WD/JAV/Momotaro_Eizo',
-    # '/Volumes/WD/JAV/Ms_Video_Group',
-    # '/Volumes/WD/JAV/Nagae_Style',
-    # '/Volumes/WD/JAV/OPPAI',
-    # '/Volumes/WD/JAV/PREMIUM',
-    # '/Volumes/WD/JAV/Prestige',
-    # '/Volumes/WD/JAV/Pussy_Bank',
-    # '/Volumes/WD/JAV/ROCKET',
-    # '/Volumes/WD/JAV/S1_NO1_STYLE',
-    # '/Volumes/WD/JAV/SEX_Agent_Daydreamers',
-    # '/Volumes/WD/JAV/SODCreate',
-    # '/Volumes/WD/JAV/STAR_PARADISE',
-    # '/Volumes/WD/JAV/Tameike_Goro',
-    # '/Volumes/WD/JAV/VnR_PRODUCE',
-    # '/Volumes/WD/JAV/WANZ',
-    # '/Volumes/WD/JAV/WANZ-Endure',
-    '/Volumes/WD/JAV/Misc'
+    '/Volumes/WD/JAV/MOODYZ',
+    '/Volumes/WD/JAV/MUTEKI',
+    '/Volumes/WD/JAV/Maxing',
+    '/Volumes/WD/JAV/Momotaro_Eizo',
+    '/Volumes/WD/JAV/Nagae_Style',
+    '/Volumes/WD/JAV/OPPAI',
+    '/Volumes/WD/JAV/PREMIUM',
+    '/Volumes/WD/JAV/Prestige',
+    '/Volumes/WD/JAV/Pussy_Bank',
+    '/Volumes/WD/JAV/ROCKET',
+    '/Volumes/WD/JAV/S1_NO1_STYLE',
+    '/Volumes/WD/JAV/SEX_Agent_Daydreamers',
+    '/Volumes/WD/JAV/SODCreate',
+    '/Volumes/WD/JAV/STAR_PARADISE',
+    '/Volumes/WD/JAV/Tameike_Goro',
+    '/Volumes/WD/JAV/VnR_PRODUCE',
+    '/Volumes/WD/JAV/WANZ',
+    '/Volumes/WD/JAV/WANZ-Endure',
+    '/Volumes/WD/JAV/Misc',
+
+    # '/Volumes/WD/VR',
+    # '/Volumes/WD/VR/3DSVR',
+    # '/Volumes/WD/VR/AJVR',
+    # '/Volumes/WD/VR/CBIKMV',
+    # '/Volumes/WD/VR/CzechVR-Handy',
+    # '/Volumes/WD/VR/CzechVR-Regular',
+    # '/Volumes/WD/VR/EBVR',
+    # '/Volumes/WD/VR/HNVR',
+    # '/Volumes/WD/VR/IPVR',
+    # '/Volumes/WD/VR/KAVR',
+    # '/Volumes/WD/VR/KBVR',
+    # '/Volumes/WD/VR/KIWVR',
+    # '/Volumes/WD/VR/MDVR',
+    # '/Volumes/WD/VR/Oppai',
+    # '/Volumes/WD/VR/PRVR',
+    # '/Volumes/WD/VR/SAVR',
+    # '/Volumes/WD/VR/SIVR',
+    # '/Volumes/WD/VR/Sexlikereal-Handy',
+    # '/Volumes/WD/VR/Sexlikereal-Regular',
+    # '/Volumes/WD/VR/VRKM',
+    # '/Volumes/WD/VR/WAVR'
 ]
 
 def save_image_from_url_to_path(path, url):
@@ -89,7 +110,6 @@ def save_image_from_url_to_path(path, url):
 #    from local disk to Emby
 #
 if (upload_covers):
-    crawlpath = '/Volumes/WD/JAV/MADONNA'
     for crawlpath in path_list:
         os.chdir(crawlpath)
 
@@ -110,6 +130,8 @@ if (upload_covers):
                 video_name = filename
                 video_id = video_json["Items"][0]["Id"]
             except:
+                print("Couldn't connect to Emby, is it running?")
+                SystemExit()
                 continue
 
             print(json.dumps(video_json, indent=4, sort_keys = True))
@@ -124,8 +146,6 @@ if (upload_covers):
                     header = {"Content-Type" : "image/jpeg"}
                     response = requests.post(url=url, data=ls_f, headers=header)
                     print(response.text)
-
-            print("done uploading jpgs")
 
 
 if(fetch_actress_images):
@@ -193,9 +213,11 @@ if(fetch_actress_images):
                 print(response.text)
                 count = count + 1
 
-        
-    # print(count + " set ")
 
         
 
+    executionTime = (time.time() - startTime)
+    print("   ")
+    print("--- Sorting completed in "+ str(executionTime) +" seconds. ---")
+    print("   ")
  

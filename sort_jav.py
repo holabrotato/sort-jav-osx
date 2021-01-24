@@ -3,6 +3,7 @@ import urllib.request
 import re
 import touch
 import html
+import shutil
 import base64
 import string
 from mutagen.mp4 import MP4
@@ -45,39 +46,60 @@ class JAVMovie:
 
 _movie = JAVMovie(code="")
 
+sort_map = {
+    "Prestige" : ["ABP", "ABW", "MBM"],
+    "Premium" : ["PRTD", "PRED"],
+    "kawaii" : ["CAWD"],
+    'Das' : ["DASD"],
+    "Faleno" : ["FSDSS", "FCDSS"],
+    "Fitch" : ["JUFE", "JUFD"],
+    "E-BODY" : ["EBOD"],
+    "Tameike_Goro" : ["MEYD"],
+    "Hon_Naka" : ["HND", "HNDS"],
+    "MADONNA" : ["JUL", "JUY"],
+    "MOODYZ" : ["MIAA", "MIDE"],
+    "Momotaro_Eizo" : ["YMDD"],
+    "Idea_Pocket" : ["IPX", "IPZ", "IPIT"],
+    'S1_NO1_STYLE' : ["SSNI","OFJE", "SNIS"],
+    "Misc" : ["DANDY", "VEC", "MXGS","MVSD", "NACR","SUKE", "NSPS", "MMND", "FONE", "MDTD"]
+}
+
+# this is where temporary downloads go, sort jav will parse this
+staging_path = "/Volumes/WD/Staging/"
+jav_root = "/Volumes/WD/JAV/"
 # path array
 path_list = [
     # '/Volumes/WD/JAV/',
 
-    '/Volumes/WD/JAV/Chijo_Heaven', 
-    '/Volumes/WD/JAV/Das',
-    '/Volumes/WD/JAV/E-BODY',
-    '/Volumes/WD/JAV/Faleno',
-    '/Volumes/WD/JAV/Fitch',
-    '/Volumes/WD/JAV/Hajime_Kikaku',
-    '/Volumes/WD/JAV/Hon_Naka',
-    '/Volumes/WD/JAV/Idea_Pocket',
-    '/Volumes/WD/JAV/Leo',
-    '/Volumes/WD/JAV/MADONNA',
-    '/Volumes/WD/JAV/MOODYZ',
-    '/Volumes/WD/JAV/MUTEKI',
-    '/Volumes/WD/JAV/Maxing',
-    '/Volumes/WD/JAV/Momotaro_Eizo',
-    '/Volumes/WD/JAV/Nagae_Style',
-    '/Volumes/WD/JAV/OPPAI',
-    '/Volumes/WD/JAV/PREMIUM',
-    '/Volumes/WD/JAV/Prestige',
-    '/Volumes/WD/JAV/Pussy_Bank',
-    '/Volumes/WD/JAV/ROCKET',
-    '/Volumes/WD/JAV/S1_NO1_STYLE',
-    '/Volumes/WD/JAV/SEX_Agent_Daydreamers',
-    '/Volumes/WD/JAV/SODCreate',
-    '/Volumes/WD/JAV/STAR_PARADISE',
-    '/Volumes/WD/JAV/Tameike_Goro',
-    '/Volumes/WD/JAV/VnR_PRODUCE',
-    '/Volumes/WD/JAV/WANZ',
-    '/Volumes/WD/JAV/WANZ-Endure',
-    '/Volumes/WD/JAV/Misc',
+    # '/Volumes/WD/JAV/Chijo_Heaven', 
+    # '/Volumes/WD/JAV/Das',
+    # '/Volumes/WD/JAV/E-BODY',
+    # '/Volumes/WD/JAV/Faleno',
+    # '/Volumes/WD/JAV/Fitch',
+    # '/Volumes/WD/JAV/Hajime_Kikaku',
+    # '/Volumes/WD/JAV/Hon_Naka',
+    # '/Volumes/WD/JAV/Idea_Pocket',
+    # '/Volumes/WD/JAV/Leo',
+    # '/Volumes/WD/JAV/MADONNA',
+    # '/Volumes/WD/JAV/MOODYZ',
+    # '/Volumes/WD/JAV/MUTEKI',
+    # '/Volumes/WD/JAV/Maxing',
+    # '/Volumes/WD/JAV/Momotaro_Eizo',
+    # '/Volumes/WD/JAV/Nagae_Style',
+    # '/Volumes/WD/JAV/OPPAI',
+    # '/Volumes/WD/JAV/PREMIUM',
+    # '/Volumes/WD/JAV/Prestige',
+    # '/Volumes/WD/JAV/Pussy_Bank',
+    # '/Volumes/WD/JAV/ROCKET',
+    # '/Volumes/WD/JAV/S1_NO1_STYLE',
+    # '/Volumes/WD/JAV/SEX_Agent_Daydreamers',
+    # '/Volumes/WD/JAV/SODCreate',
+    # '/Volumes/WD/JAV/STAR_PARADISE',
+    # '/Volumes/WD/JAV/Tameike_Goro',
+    # '/Volumes/WD/JAV/VnR_PRODUCE',
+    # '/Volumes/WD/JAV/WANZ',
+    # '/Volumes/WD/JAV/WANZ-Endure',
+    # '/Volumes/WD/JAV/Misc',
 
     # '/Volumes/WD/VR/AJVR',
     # '/Volumes/WD/VR/EBVR',
@@ -224,7 +246,7 @@ def download_subtitles(_movie, path):
         subtitle_url = row.find("a")["href"]
         if(code.upper() in subtitle_url.upper()):
             
-            srt_download_link = subtitle_url.split(".")[0] + ".srt"
+            srt_download_link = subtitle_url.split(".")[0] + "-en.srt"
             opener = urllib.request.build_opener()
             opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')]
             urllib.request.install_opener(opener)
@@ -805,6 +827,35 @@ def sort_jav(a_path, s):
 if __name__ == '__main__':
     print("--- sort_jav.py: Beginning sort, please wait ---")
     settings = read_file('settings_sort_jav.ini')
+
+    if(len(path_list)==0):
+        for f in os.listdir(staging_path):     
+            fullpath = os.path.join(staging_path, f)
+            file_name, file_extension = os.path.splitext(fullpath)
+            if(file_extension == ".mp4" or file_extension == ".mkv"):
+                vid_id = find_id(strip_bad_data(strip_file_name(fullpath)))
+                if(vid_id != None):
+                    vid_id = correct_vid_id(vid_id)
+                    studio_code = vid_id.split("-")[0]
+                    # now we sort and put in the correct directory
+
+                    for studio,series in sort_map.items():
+                        if(studio_code in series):
+                            a_new_path = jav_root + studio
+                            print("Moving " + fullpath + " to " + a_new_path)
+                            try:
+                                dest = shutil.move(fullpath, a_new_path) 
+                                print("Moved " + dest)
+                            except Exception as E:
+                                print(E)
+
+
+                            if(a_new_path not in path_list):
+                                path_list.append(a_new_path)
+                                print(path_list)
+
+
+                 
     for a_path in path_list:
         try:
             sort_jav(a_path, settings)
