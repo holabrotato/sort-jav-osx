@@ -44,8 +44,13 @@ class JAVMovie:
             genre_string += genre + "#"
         return genre_string
 
+
+# Global object, I know it's ugly
 _movie = JAVMovie(code="")
 
+#
+#  This array is used when sorting the staging section into the respective studios
+#
 sort_map = {
     "Prestige" : ["ABP", "ABW", "MBM"],
     "Premium" : ["PRTD", "PRED"],
@@ -67,7 +72,9 @@ sort_map = {
 # this is where temporary downloads go, sort jav will parse this
 staging_path = "/Volumes/WD/Staging/"
 jav_root = "/Volumes/WD/JAV/"
-# path array
+
+
+# path array:  list of directories for sort_jav to clean, fetch metatags.
 path_list = [
     # '/Volumes/WD/JAV/',
 
@@ -229,6 +236,10 @@ def download_subtitles(_movie, path):
     path = "/".join(path.split('/')[0:-1])
     
     print("      (Subtitles) Searching subtitlecat..")
+
+    # Do we already have this subtitle on disk?
+    # First check our local disk to see if we already have this sub in our disk cache
+    # Or check our Sub directory for manually downloaded subs
     if(os.path.isfile(path + "/" + _movie.code + ".default.en.srt")):
         print("      (Skipping) We already have this subtitle")
         return True
@@ -238,6 +249,7 @@ def download_subtitles(_movie, path):
         shutil.copyfile(my_file, to_file)
         return True
 
+    # Check subtitle cat
     code = _movie.code
     subtitlecat_html = get_page("https://www.subtitlecat.com/index.php?search=" + code)
     soup = BeautifulSoup(subtitlecat_html, "html.parser")
@@ -278,8 +290,6 @@ def parse_r18_page(html, vid_id):
     jav_video.title = soup.find('cite',itemprop='name').get_text().strip()
 
     # release date
-
-    
     datetime_str = soup.find(itemprop='dateCreated').get_text().strip().replace("Sept", "Sep").replace("June", "Jun.").replace("July","Jul.").replace("May", "May.")
     datetime_object = datetime.strptime(datetime_str, '%b. %d, %Y')
 
@@ -606,7 +616,8 @@ def strip_bad_data(path):
             path = path.replace(str_to_remove, '')
 
     return path
-    
+
+# Adds an OSX tag to a file    
 def add_tag(tag, file):
     tag_results = os.system("tag --add \"" + tag + "\" " + file)
 
@@ -626,7 +637,6 @@ def sort_jav(a_path, s):
   
         # only consider video files
         if not os.path.isdir(fullpath): # ignore DS Store and folders
-
             if f == '.DS_Store' or file_extension == ".jpg" or file_extension == ".srt" or file_extension == ".nfo":
                 continue
 
@@ -634,6 +644,8 @@ def sort_jav(a_path, s):
                 meta = OSXMetaData(fullpath)
                 already_processed = False
 
+                # We can check if a video has already been processed by the finder comment meta data
+                # This only works on OSX
                 if meta.findercomment:
                     already_processed = "jdc" in meta.findercomment
                     if already_processed and s['skip-processed']:
